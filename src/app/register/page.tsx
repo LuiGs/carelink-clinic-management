@@ -32,41 +32,39 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   const exists = sp?.error === 'exists'
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 px-4 text-gray-900">
-      <div className="w-full max-w-lg bg-white p-8 sm:p-12 rounded-2xl shadow-md border border-emerald-100">
-        <div className="mx-auto max-w-sm">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Crear cuenta</h1>
-          <p className="text-sm text-gray-600 mb-6">Regístrate para usar CareLink</p>
+      <div className="w-full max-w-lg flex flex-col bg-white rounded-2xl shadow-lg border border-emerald-100 px-6 pt-6 pb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Crear cuenta</h1>
+        <p className="text-base text-gray-600 mb-2 text-center">Regístrate para usar CareLink</p>
         {exists && (
-          <div className="mb-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 border border-yellow-200">
+          <div className="mb-2 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 border border-yellow-200 text-center">
             Ya existe una cuenta con ese email.
           </div>
         )}
-  <form action={registerAction} className="space-y-5">
-          <div>
+        <form action={registerAction} className="flex flex-col items-center">
+          <div className="w-full max-w-sm flex flex-col">
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
-            <input id="name" name="name" className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900" />
+            <input id="name" name="name" className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900" />
           </div>
-          <div>
+          <div className="w-full max-w-sm flex flex-col mt-3">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-            <input id="email" name="email" type="email" required className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900" />
+            <input id="email" name="email" type="email" required className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900" />
           </div>
-          <div>
+          <div className="w-full max-w-sm flex flex-col mt-3">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">Contraseña</label>
-            <input id="password" name="password" type="password" required minLength={6} className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900" />
+            <input id="password" name="password" type="password" required minLength={6} className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900" />
           </div>
-          <div>
+          <div className="w-full max-w-sm flex flex-col mt-3">
             <label htmlFor="role" className="block text-sm font-medium text-gray-700">Rol</label>
-            <select id="role" name="role" className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900">
+            <select id="role" name="role" className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-gray-900">
               <option value="PROFESIONAL">Profesional</option>
               <option value="MESA_ENTRADA">Mesa de entrada</option>
               <option value="GERENTE">Gerente</option>
             </select>
           </div>
-          <button type="submit" className="w-full bg-emerald-600 text-white py-2.5 rounded-md hover:bg-emerald-700 transition shadow">Crear cuenta</button>
+          <button type="submit" className="mt-4 max-w-sm w-full sm:w-auto bg-emerald-600 text-white py-2.5 px-8 rounded-md hover:bg-emerald-700 transition shadow">Crear cuenta</button>
         </form>
-          <div className="mt-6 text-center text-sm text-gray-600">
-            ¿Ya tienes cuenta?{' '}<a href="/login" className="text-emerald-700 font-medium hover:underline">Iniciar sesión</a>
-          </div>
+        <div className="mt-4 text-center text-sm text-gray-600">
+          ¿Ya tienes cuenta?{' '}<a href="/login" className="text-emerald-700 font-medium hover:underline">Iniciar sesión</a>
         </div>
       </div>
     </div>

@@ -1,33 +1,131 @@
-# Contributing to CareLink
+# Contributing to CareLink - Sistema de Gestión de Turnos Clínicos
 
-¡Gracias por tu interés en contribuir a CareLink! Este documento proporciona pautas para contribuir al proyecto.
+¡Gracias por contribuir a CareLink! Este es un proyecto académico desarrollado por 7 estudiantes. Este documento establece las pautas de colaboración para nuestro equipo.
 
-## 🚀 Cómo contribuir
+## 🎯 Flujo de Trabajo Git Flow
 
-### Reportar bugs
-- Usa la plantilla de bug report en GitHub Issues
-- Proporciona información detallada sobre el problema
-- Incluye pasos para reproducir el bug
+### Estructura de Ramas
+- **`main`** - Código de producción estable (protegida)
+- **`develop`** - Rama principal de desarrollo (DEFAULT, protegida)  
+- **`feature/[nombre]`** - Ramas individuales por funcionalidad
+- **`hotfix/[nombre]`** - Correcciones urgentes desde main
 
-### Solicitar features
-- Usa la plantilla de feature request en GitHub Issues
-- Describe claramente la funcionalidad solicitada
-- Explica por qué sería útil para el proyecto
+### 🔄 Workflow del Equipo
 
-### Pull Requests
-1. Fork el repositorio
-2. Crea una nueva rama desde `develop`
-3. Realiza tus cambios
-4. Asegúrate de que pasen todos los tests y linting
-5. Crea un Pull Request con una descripción clara
+#### 1. Comenzar una nueva funcionalidad
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/gestion-pacientes
+```
 
-## 📋 Estándares de código
+#### 2. Desarrollar y commitear
+```bash
+git add .
+git commit -m "feat: add patient registration form"
+git push origin feature/gestion-pacientes
+```
 
-- Usa TypeScript para todo el código nuevo
-- Sigue las reglas de ESLint configuradas
-- Usa Prettier para el formateo automático
-- Escribe nombres descriptivos para variables y funciones
-- Agrega comentarios para lógica compleja
+#### 3. Crear Pull Request
+- **Base branch**: `develop`
+- **Compare branch**: `feature/tu-funcionalidad`
+- Usar la plantilla de PR
+- Solicitar review de al menos 1 compañero
+
+#### 4. Code Review y Merge
+- Revisar código cuidadosamente
+- Probar los cambios localmente
+- Aprobar solo si todo funciona correctamente
+
+## 📋 Reportar Issues
+
+### Bugs
+- Usar plantilla de bug report
+- Incluir screenshots si es posible
+- Etiquetar con severidad: `critical`, `high`, `medium`, `low`
+
+### Nuevas Funcionalidades
+- Usar plantilla de feature request
+- Discutir en team antes de implementar
+- Asignar responsable y estimar tiempo
+
+## 📋 Estándares de Código
+
+### Convenciones de Naming
+- **Archivos**: `kebab-case` (ej: `patient-form.tsx`)
+- **Componentes**: `PascalCase` (ej: `PatientForm`)
+- **Variables/Funciones**: `camelCase` (ej: `getUserName`)
+- **Constantes**: `UPPER_SNAKE_CASE` (ej: `API_BASE_URL`)
+
+### Estructura de Commits
+Usar [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` nueva funcionalidad
+- `fix:` corrección de bug
+- `docs:` cambios en documentación
+- `style:` cambios de formato
+- `refactor:` refactoring de código
+- `test:` agregar o modificar tests
+- `chore:` tareas de mantenimiento
+
+### Reglas de Código
+- ✅ **TypeScript obligatorio** para todo código nuevo
+- ✅ **ESLint debe pasar** sin errores
+- ✅ **Componentes pequeños** (< 200 líneas)
+- ✅ **Nombres descriptivos** y en español para funcionalidades de dominio
+- ✅ **Comentarios** para lógica de negocio compleja
+- ✅ **Prisma migrations** para cambios de DB
+
+## 🛠️ Configuración de Desarrollo
+
+### Primera vez
+```bash
+# Clonar y configurar
+git clone <repo-url>
+cd carelink-clinic-management
+npm install
+cp .env.example .env
+
+# Base de datos
+docker-compose up -d
+npm run prisma:generate
+npm run prisma:migrate
+npm run db:seed
+
+# Desarrollo
+npm run dev
+```
+
+### Comandos útiles
+```bash
+npm run lint        # Verificar código
+npm run build       # Build producción
+npm run type-check  # Verificar TypeScript
+npm run prisma:studio  # UI de base de datos
+```
+
+## 👥 Responsabilidades del Equipo
+
+### Code Reviews
+- **Obligatorios** para merge a `develop` y `main`
+- Mínimo **1 aprobación** requerida
+- Revisar: funcionalidad, código, tests, documentación
+- **No aprobar** si hay conflictos o CI falla
+
+### Issues y Asignaciones
+- **Asignarse** antes de trabajar en un issue
+- **Comunicar** si no puedes completar a tiempo
+- **Actualizar** el estado del issue regularmente
+- **Cerrar** issues solo cuando están completamente terminados
+
+## 🚨 Reglas Importantes
+
+❌ **NUNCA hacer push directo** a `main` o `develop`  
+❌ **NO hacer force push** a ramas compartidas  
+❌ **NO mergear** tu propio PR sin review  
+❌ **NO commitear** archivos de configuración local  
+✅ **SIEMPRE** probar los cambios antes del PR  
+✅ **SIEMPRE** sincronizar con `develop` antes de crear PR  
+✅ **SIEMPRE** usar las plantillas de Issues y PR
 
 ## 🧪 Testing
 

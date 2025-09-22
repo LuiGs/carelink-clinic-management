@@ -1,6 +1,15 @@
-# CareLink
+# 🏥 CareLink - Sistema de Gestión de Turnos Clínicos
 
-Sistema de gestión de salud y cuidado desarrollado con Next.js, TypeScript, Tailwind CSS, Prisma y PostgreSQL.
+Sistema académico para la gestión integral de turnos médicos en clínicas, desarrollado por un equipo de 7 estudiantes como proyecto universitario.
+
+## 📋 Descripción del Proyecto
+
+CareLink es una aplicación web moderna que permite:
+- **Gestión de Pacientes**: Registro, historial y datos médicos
+- **Agenda Médica**: Calendario de turnos y disponibilidad de médicos  
+- **Sistema de Turnos**: Reserva, confirmación y seguimiento de citas
+- **Panel Administrativo**: Gestión de usuarios, reportes y configuración
+- **Notificaciones**: Recordatorios por email y SMS (futuro)
 
 ## 🚀 Tecnologías
 

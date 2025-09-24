@@ -15,6 +15,14 @@ enum Role {
   GERENTE
 }
 
+// Estado de los turnos en la agenda
+enum AppointmentStatus {
+  PENDING   // Turno reservado, sin llegada
+  WAITING   // Paciente en sala de espera
+  COMPLETED // Atendido
+  CANCELED  // Cancelado
+}
+
 // Modelo de usuario con autenticación básica y rol
 model User {
   id            String    @id @default(cuid())
@@ -25,6 +33,7 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
+  appointments  Appointment[] @relation("ProfessionalAppointments")
 
   @@map("users")
 }
@@ -39,4 +48,23 @@ model Session {
   expiresAt DateTime
 
   @@map("sessions")
+}
+
+// Turnos/appointments de la agenda de profesionales
+model Appointment {
+  id             String            @id @default(cuid())
+  professionalId String            // Por ahora referenciamos a User.id con rol PROFESIONAL
+  professional   User              @relation("ProfessionalAppointments", fields: [professionalId], references: [id], onDelete: Cascade)
+  patientId      String?           // A definir paciente luego
+  title          String
+  start          DateTime
+  end            DateTime
+  status         AppointmentStatus @default(PENDING)
+  notes          String?
+
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([professionalId, start, end])
+  @@map("appointments")
 }

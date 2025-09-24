@@ -17,11 +17,16 @@ export default async function ProfesionalPage() {
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4 flex items-center justify-between">
           <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Panel del Profesional</h1>
+          <div className="flex items-center gap-3">
+            <a href="/profesional/agenda" className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100">
+              Ver agenda
+            </a>
           <form action={signOutAction} className="ml-4">
             <button className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100">
               Cerrar sesión
             </button>
           </form>
+          </div>
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-6 lg:px-8 py-8 space-y-6">

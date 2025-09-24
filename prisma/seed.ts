@@ -19,6 +19,8 @@ async function main() {
     })
   }
   console.log('🌱 Seed completed: users created')
+
+  // Nota: el seeding de Appointment se hará luego de ejecutar migraciones y prisma generate.
 }
 
 main()

@@ -1,0 +1,51 @@
+.legend { display: flex; gap: 16px; align-items: center; padding: 6px 2px; }
+.legendItem { display: flex; gap: 8px; align-items: center; font-size: 12px; color: #2a5545; }
+.badge { width: 10px; height: 10px; border-radius: 999px; display: inline-block; border: 1px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.05) inset; }
+
+/* Status colors */
+.status_PENDING { background: #ffd666; }
+.status_WAITING { background: #66b3ff; }
+.status_COMPLETED { background: #27ae60; color: #fff; }
+.status_CANCELED { background: #ff6b6b; color: #fff; }
+
+/* Toggle buttons (tailwind-like in module) */
+.viewBtnTail { padding: 6px 10px; background: #ffffff; color: #047857; border: none; cursor: pointer; }
+.viewActiveTail { padding: 6px 10px; background: #047857; color: #ffffff; border: none; cursor: default; }
+
+/* Time grid */
+.timeCol { width: 56px; flex: 0 0 auto; border-right: 1px solid #e3f0ea; }
+.timeCell { height: 56px; font-size: 11px; color: #5a7; display: flex; justify-content: flex-end; padding-right: 6px; align-items: flex-start; padding-top: 2px; }
+
+.dayGrid { display: grid; grid-template-columns: 56px 1fr; gap: 0; background: white; border: 1px solid #cfe7dd; border-radius: 10px; overflow: hidden; }
+.dayCol { position: relative; min-height: calc(56px * 13); }
+.eventsLayer { position: relative; height: calc(56px * 13); }
+.hourLines { position: absolute; inset: 0; }
+.hourLine { height: 56px; border-top: 1px dashed #e3f0ea; }
+
+.event { position: absolute; left: 8px; right: 8px; padding: 6px 8px; border-radius: 8px; background: #d1f1e4; color: #0b3d2d; border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+.eventTitle { font-weight: 600; font-size: 12px; }
+.eventTime { font-size: 11px; opacity: 0.9; }
+
+.weekGrid { display: grid; grid-template-rows: auto 1fr; background: white; border: 1px solid #cfe7dd; border-radius: 10px; overflow: hidden; }
+.gridHeader { display: grid; grid-template-columns: 56px repeat(7, 1fr); background: #f2fbf6; border-bottom: 1px solid #e3f0ea; }
+.cornerCell { border-right: 1px solid #e3f0ea; }
+.headerCell { padding: 8px; text-align: center; color: #0b7a5c; }
+.headerDayName { font-size: 12px; }
+.headerDayNum { font-size: 18px; font-weight: 700; }
+
+.gridBody { display: grid; grid-template-columns: 56px repeat(7, 1fr); min-height: calc(56px * 13); }
+.dayCol { position: relative; border-left: 1px solid #e3f0ea; }
+.dayCol:first-of-type { border-left: none; }
+
+.monthGrid { display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid #cfe7dd; border-radius: 10px; overflow: hidden; background: white; }
+.monthHeaderCell { background: #f2fbf6; padding: 8px; text-align: center; font-size: 12px; color: #0b7a5c; border-bottom: 1px solid #e3f0ea; }
+.monthCell { border-right: 1px solid #e3f0ea; border-bottom: 1px solid #e3f0ea; padding: 6px; text-align: left; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; min-height: 96px; }
+.monthCell:nth-child(7n) { border-right: none; }
+.monthCellDate { font-size: 12px; color: #0b7a5c; font-weight: 600; }
+.monthCellMuted .monthCellDate { color: #87b0a2; }
+.monthEvents { margin-top: 4px; display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.monthEvent { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 6px; color: white; font-size: 11px; }
+.monthEventDot { width: 6px; height: 6px; border-radius: 999px; background: white; opacity: 0.9; }
+.more { font-size: 11px; color: #0b7a5c; opacity: 0.8; }
+
+.ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

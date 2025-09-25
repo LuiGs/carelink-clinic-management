@@ -17,20 +17,22 @@ enum Role {
 
 // Modelo de usuario con autenticación básica y rol
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  passwordHash  String
-  role          Role?     // Optional, assigned after creation
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String
+  role         Role? // Optional, assigned after creation
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
 
   // Relaciones con pacientes y turnos
-  createdPatients     Patient[]      @relation("PatientCreator")
-  professionalAppointments Appointment[] @relation("ProfesionalAppointments")
-  createdAppointments      Appointment[] @relation("CreatorAppointments")
-
+  createdPatients            Patient[]      @relation("PatientCreator")
+  professionalAppointments   Appointment[]  @relation("ProfesionalAppointments")
+  createdAppointments        Appointment[]  @relation("CreatorAppointments")
+  especialidadesCreadas      Especialidad[] @relation("EspecialidadCreatedBy")
+  especialidadesActualizadas Especialidad[] @relation("EspecialidadUpdatedBy")
+  especialidadesDesactivadas Especialidad[] @relation("EspecialidadDeactivatedBy")
 
   @@map("users")
 }
@@ -49,48 +51,48 @@ model Session {
 
 // Obras sociales disponibles en Argentina
 model ObraSocial {
-  id          String    @id @default(cuid())
-  nombre      String    @unique
-  codigo      String?   @unique
-  activa      Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  nombre    String   @unique
+  codigo    String?  @unique
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("obras_sociales")
 }
 
 // Modelo de paciente con campos específicos para Argentina
 model Patient {
-  id              String      @id @default(cuid())
+  id              String   @id @default(cuid())
   // Datos personales
   nombre          String
   apellido        String
-  dni             String      @unique
+  dni             String   @unique
   fechaNacimiento DateTime
-  genero          String      // M, F, Otro
+  genero          String // M, F, Otro
   telefono        String?
   celular         String?
   email           String?
-  
+
   // Dirección
-  direccion       String?
-  ciudad          String?
-  provincia       String?
-  codigoPostal    String?
-  
+  direccion    String?
+  ciudad       String?
+  provincia    String?
+  codigoPostal String?
+
   // Contacto de emergencia
-  contactoEmergenciaNombre    String?
-  contactoEmergenciaTelefono  String?
-  contactoEmergenciaRelacion  String?
-  
+  contactoEmergenciaNombre   String?
+  contactoEmergenciaTelefono String?
+  contactoEmergenciaRelacion String?
+
   // Sistema
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  createdBy       String      // ID del usuario que creó el paciente
-  creator         User        @relation("PatientCreator", fields: [createdBy], references: [id])
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String // ID del usuario que creó el paciente
+  creator   User     @relation("PatientCreator", fields: [createdBy], references: [id])
+
   // Turnos
-  appointments    Appointment[]
+  appointments Appointment[]
 
   @@map("patients")
 }
@@ -105,6 +107,27 @@ enum AppointmentStatus {
   NO_ASISTIO
 }
 
+model Especialidad {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  activa      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Auditoría
+  createdById     String?
+  updatedById     String?
+  deactivatedById String?
+  deactivatedAt   DateTime?
+
+  createdBy     User? @relation("EspecialidadCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User? @relation("EspecialidadUpdatedBy", fields: [updatedById], references: [id])
+  deactivatedBy User? @relation("EspecialidadDeactivatedBy", fields: [deactivatedById], references: [id])
+
+  @@map("especialidades")
+}
+
 // Modelo de turnos/citas
 model Appointment {
   id            String            @id @default(cuid())
@@ -113,7 +136,7 @@ model Appointment {
   motivo        String?
   observaciones String?
   estado        AppointmentStatus @default(PROGRAMADO)
-  
+
   // TODO: Campos para obra social específicos del turno
   // Estos campos se agregarán cuando se implemente la funcionalidad de turnos:
   // obraSocialId         String?          // Obra social al momento del turno
@@ -121,20 +144,20 @@ model Appointment {
   // tipoConsulta         String?          // Particular, Obra Social, etc.
   // copago              Decimal?         // Monto de copago si aplica
   // autorizacion        String?          // Número de autorización de obra social
-  
+
   // Relaciones
   pacienteId    String
-  paciente      Patient          @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  paciente      Patient @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
   profesionalId String
-  profesional   User             @relation("ProfesionalAppointments", fields: [profesionalId], references: [id])
-  createdBy     String           // Usuario que creó el turno (mesa de entrada)
-  creator       User             @relation("CreatorAppointments", fields: [createdBy], references: [id])
-  
+  profesional   User    @relation("ProfesionalAppointments", fields: [profesionalId], references: [id])
+  createdBy     String // Usuario que creó el turno (mesa de entrada)
+  creator       User    @relation("CreatorAppointments", fields: [createdBy], references: [id])
+
   // TODO: Relación con obra social cuando se implementen los campos arriba
   // obraSocial           ObraSocial?      @relation(fields: [obraSocialId], references: [id])
-  
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("appointments")
 }

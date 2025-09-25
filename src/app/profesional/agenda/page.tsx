@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react'
@@ -637,3 +638,4 @@ function AppointmentPopover({ appointment, anchorRect, anchorOffset, onClose }: 
     </div>
   )
 }
+

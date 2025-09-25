@@ -9,6 +9,7 @@ export default function ProfesionalPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
+
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <ProfesionalSidebar 

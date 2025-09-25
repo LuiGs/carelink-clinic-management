@@ -19,6 +19,7 @@ async function main() {
     })
   }
 
+
   // Crear obras sociales argentinas más comunes
   const obrasSociales = [
     { nombre: 'OSDE', codigo: 'OSDE' },
@@ -48,6 +49,7 @@ async function main() {
   }
 
   console.log('🌱 Seed completed: users and obras sociales created')
+
 }
 
 main()

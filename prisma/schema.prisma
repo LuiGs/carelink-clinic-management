@@ -25,11 +25,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
-  
+
   // Relaciones con pacientes y turnos
   createdPatients     Patient[]      @relation("PatientCreator")
   professionalAppointments Appointment[] @relation("ProfesionalAppointments")
   createdAppointments      Appointment[] @relation("CreatorAppointments")
+
 
   @@map("users")
 }

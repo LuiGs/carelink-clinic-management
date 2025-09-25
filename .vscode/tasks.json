@@ -9,6 +9,12 @@
 				"$tsc"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Typecheck Next.js project",
+			"type": "shell",
+			"command": "npx --yes tsc --noEmit",
+			"group": "build"
 		}
 	]
 }

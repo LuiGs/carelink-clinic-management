@@ -58,6 +58,9 @@ model ObraSocial {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relación con turnos
+  appointments Appointment[]
+
   @@map("obras_sociales")
 }
 
@@ -107,6 +110,7 @@ enum AppointmentStatus {
   NO_ASISTIO
 }
 
+<<<<<<< HEAD
 model Especialidad {
   id          String   @id @default(cuid())
   nombre      String   @unique
@@ -126,6 +130,12 @@ model Especialidad {
   deactivatedBy User? @relation("EspecialidadDeactivatedBy", fields: [deactivatedById], references: [id])
 
   @@map("especialidades")
+=======
+// Tipos de consulta
+enum TipoConsulta {
+  OBRA_SOCIAL
+  PARTICULAR
+>>>>>>> develop
 }
 
 // Modelo de turnos/citas
@@ -136,6 +146,7 @@ model Appointment {
   motivo        String?
   observaciones String?
   estado        AppointmentStatus @default(PROGRAMADO)
+<<<<<<< HEAD
 
   // TODO: Campos para obra social específicos del turno
   // Estos campos se agregarán cuando se implemente la funcionalidad de turnos:
@@ -145,10 +156,21 @@ model Appointment {
   // copago              Decimal?         // Monto de copago si aplica
   // autorizacion        String?          // Número de autorización de obra social
 
+=======
+  
+  // Campos para obra social específicos del turno
+  obraSocialId         String?          // Obra social al momento del turno
+  numeroAfiliado       String?          // Número de afiliado al momento del turno  
+  tipoConsulta         TipoConsulta     @default(OBRA_SOCIAL) // Particular, Obra Social
+  copago              Decimal?         // Monto de copago o precio particular
+  autorizacion        String?          // Número de autorización de obra social
+  
+>>>>>>> develop
   // Relaciones
   pacienteId    String
   paciente      Patient @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
   profesionalId String
+<<<<<<< HEAD
   profesional   User    @relation("ProfesionalAppointments", fields: [profesionalId], references: [id])
   createdBy     String // Usuario que creó el turno (mesa de entrada)
   creator       User    @relation("CreatorAppointments", fields: [createdBy], references: [id])
@@ -158,6 +180,17 @@ model Appointment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+=======
+  profesional   User             @relation("ProfesionalAppointments", fields: [profesionalId], references: [id])
+  createdBy     String           // Usuario que creó el turno (mesa de entrada)
+  creator       User             @relation("CreatorAppointments", fields: [createdBy], references: [id])
+  
+  // Relación con obra social
+  obraSocial           ObraSocial?      @relation(fields: [obraSocialId], references: [id])
+  
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+>>>>>>> develop
 
   @@map("appointments")
 }

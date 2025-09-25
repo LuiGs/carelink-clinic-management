@@ -98,7 +98,7 @@ model Patient {
 enum AppointmentStatus {
   PROGRAMADO
   CONFIRMADO
-  EN_ATENCION
+  EN_SALA_DE_ESPERA
   COMPLETADO
   CANCELADO
   NO_ASISTIO

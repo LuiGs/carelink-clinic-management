@@ -26,10 +26,10 @@ export default function Home() {
               priority
             />
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-black mb-4 drop-shadow-sm">
+          <h1 className="text-5xl md:text-6xl font-bold text-emerald-600 mb-4 drop-shadow-sm">
             CareLink
           </h1>
-          <p className="text-xl text-black drop-shadow-sm">
+          <p className="text-xl text-emerald-600 drop-shadow-sm">
             Sistema de gestión de salud y cuidado
           </p>
         </div>
@@ -38,7 +38,7 @@ export default function Home() {
         <div className="flex flex-col md:flex-row min-h-[50vh]">
           {/* Gerencia Section - Violeta Crema */}
           <a 
-            href="/login/gerencia" 
+            href="/login" 
             className="flex-1 group cursor-pointer transition-all duration-300 hover:bg-purple-300 bg-purple-200 flex flex-col items-center justify-center p-6 md:p-8 text-purple-800"
           >
             <div className="text-center">
@@ -61,7 +61,7 @@ export default function Home() {
 
           {/* Profesionales Section - Azul Crema */}
           <a 
-            href="/login/profesionales" 
+            href="/login" 
             className="flex-1 group cursor-pointer transition-all duration-300 hover:bg-blue-300 bg-blue-200 flex flex-col items-center justify-center p-6 md:p-8 text-blue-800 border-x-2 border-white"
           >
             <div className="text-center">
@@ -86,7 +86,7 @@ export default function Home() {
 
           {/* Mesa de Entrada Section - Verde Crema */}
           <a 
-            href="/login/mesa-entrada" 
+            href="/login" 
             className="flex-1 group cursor-pointer transition-all duration-300 hover:bg-green-300 bg-green-200 flex flex-col items-center justify-center p-6 md:p-8 text-green-800"
           >
             <div className="text-center">

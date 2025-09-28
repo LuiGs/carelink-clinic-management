@@ -201,9 +201,6 @@ async function main() {
   console.log('📅 Creando turnos (7 días atrás y 14 días adelante, excluyendo HOY)...')
   
   const now = new Date()
-  function addMinutes(date: Date, min: number) {
-    return new Date(date.getTime() + min * 60000)
-  }
   
   function addDays(date: Date, days: number) {
     return new Date(date.getTime() + days * 24 * 60 * 60 * 1000)

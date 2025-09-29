@@ -16,7 +16,7 @@ export async function GET() {
   try {
     const currentUser = await getCurrentUser()
     
-    if (!currentUser || !currentUser.roles.includes('GERENTE')) {
+    if (!currentUser || (!currentUser.roles.includes('GERENTE') && !currentUser.roles.includes('MESA_ENTRADA'))) {
       return NextResponse.json(
         { error: 'No tienes permisos para acceder a esta información' },
         { status: 403 }

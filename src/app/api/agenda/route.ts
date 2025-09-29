@@ -18,17 +18,41 @@ type Appointment = {
 export async function GET(req: NextRequest) {
   const session = await getSession()
   if (!session) return NextResponse.json([], { status: 200 })
-  const professionalId = session.userId // provisional: userId == professionalId until model exists
 
   const { searchParams } = new URL(req.url)
   const from = searchParams.get('from')
   const to = searchParams.get('to')
   const statusParam = searchParams.get('status') // comma-separated statuses matching Prisma enum values
+  const professionalIdParam = searchParams.get('professionalId') // Allow querying other professionals
   const q = (searchParams.get('q') || '').trim()
   if (!from || !to) return NextResponse.json([], { status: 200 })
 
   const fromDate = new Date(from)
   const toDate = new Date(to)
+
+  // Determine which professional's appointments to fetch
+  let targetProfessionalId = session.userId // Default to current user
+  
+  // If professionalId is provided and user has appropriate permissions, use it
+  if (professionalIdParam) {
+    // Get current user's roles from database
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.userId },
+      include: { roles: true }
+    })
+    
+    const userRoles = currentUser?.roles.map(r => r.role) || []
+    
+    // Allow MESA_ENTRADA and GERENTE to view any professional's appointments
+    if (userRoles.includes('MESA_ENTRADA') || userRoles.includes('GERENTE')) {
+      targetProfessionalId = professionalIdParam
+    }
+    // If user is PROFESIONAL but requesting their own data, allow it
+    else if (userRoles.includes('PROFESIONAL') && professionalIdParam === session.userId) {
+      targetProfessionalId = professionalIdParam
+    }
+    // Otherwise, keep default (current user)
+  }
 
   // Build filters
   const estadoIn = statusParam
@@ -46,9 +70,9 @@ export async function GET(req: NextRequest) {
   // Query DB
   const rows = await prisma.appointment.findMany({
     where: {
-      profesionalId: professionalId,
+      profesionalId: targetProfessionalId,
       fecha: { gte: fromDate, lt: toDate },
-  ...(estadoInPrisma && estadoInPrisma.length ? { estado: { in: estadoInPrisma } } : {}),
+      ...(estadoInPrisma && estadoInPrisma.length ? { estado: { in: estadoInPrisma } } : {}),
       ...(q
         ? {
             OR: [
@@ -80,7 +104,7 @@ export async function GET(req: NextRequest) {
       title,
       start: start.toISOString(),
       end: end.toISOString(),
-  status: r.estado,
+      status: r.estado,
       notes: r.observaciones ?? null,
     }
   })

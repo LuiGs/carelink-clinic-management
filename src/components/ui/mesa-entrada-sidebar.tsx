@@ -14,7 +14,8 @@ import {
   ChevronRight,
   User,
   Clock,
-  Home
+  Home,
+  ClipboardList
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -44,6 +45,13 @@ const sidebarItems = [
     icon: Calendar, 
     href: '/mesa-entrada/turnos',
     description: 'Agenda y citas' 
+  },
+  { 
+    id: 'lista-turnos', 
+    name: 'Lista de turnos', 
+    icon: ClipboardList, 
+    href: '/mesa-entrada/lista-turnos',
+    description: 'Turnos por profesional' 
   },
   { 
     id: 'pagos', 

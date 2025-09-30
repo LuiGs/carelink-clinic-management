@@ -82,6 +82,7 @@ model Patient {
   celular         String?
   email           String?
   
+  
   // Dirección
   direccion       String?
   ciudad          String?

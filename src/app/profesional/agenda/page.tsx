@@ -1,9 +1,12 @@
 'use client'
+
 import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react'
 import styles from './agenda.module.css'
+import { useHoverWithin } from "@/hooks/useHoverWithin";
 import { AppointmentStatus } from '@prisma/client'
 
-// UI-specific appointment type (transformed from Prisma Appointment)
+
+
 type Appointment = {
   id: string
   professionalId: string
@@ -16,6 +19,7 @@ type Appointment = {
 }
 
 type View = 'day' | 'week' | 'month'
+
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
   PROGRAMADO: 'Programado',
@@ -85,6 +89,8 @@ export default function AgendaPage() {
   const [search, setSearch] = useState('')
   const hoverTimerRef = useRef<number | null>(null)
   const lastHoverIdRef = useRef<string | null>(null)
+  const { ref: inside } = useHoverWithin<HTMLDivElement>();
+
 
   // Track anchor element rect on scroll/resize for dynamic popover positioning
   useEffect(() => {
@@ -179,10 +185,10 @@ export default function AgendaPage() {
     setDate(new Date())
   }
 
-  function navigateToAppointment(a: Appointment) {
-    // Redirige a la nueva página de consulta
-    window.location.href = `/profesional/agenda/consulta?id=${a.id}`;
-  }
+function navigateToAppointment(a: Appointment) {
+  window.location.href = `/profesional/agenda/consulta?id=${a.id}`;
+}
+
 
   function byDay(d: Date) {
     const y = d.getFullYear()
@@ -333,6 +339,7 @@ export default function AgendaPage() {
             appointment={active}
             anchorRect={anchorRect}
             anchorOffset={anchorOffset}
+            inside={inside.current !== null}
             onClose={() => {
               setActive(null)
               setAnchorRect(null)
@@ -535,9 +542,10 @@ function WeekView({ days, items, onOpen, onHoverLeave, onClickOpen }: { days: Da
           </div>
           {(() => {
             const itemsFor = itemsForDay(d)
-            const max = 3;
+            const dense = itemsFor.length > 3
+            const max = dense ? 6 : 4
             return (
-              <div className={styles.monthEvents}>
+              <div className={`${styles.monthEvents} ${dense ? styles.monthEventsDense : ''}`}>
                 {itemsFor.slice(0, max).map((a) => (
                   <div key={a.id} className={`${styles.monthEvent} ${styles[`status_${a.status}`]} status_${a.status}`}
                     onMouseEnter={(e) => { e.stopPropagation(); onOpen(a, e.currentTarget as HTMLElement) }}
@@ -560,10 +568,27 @@ function WeekView({ days, items, onOpen, onHoverLeave, onClickOpen }: { days: Da
 }
 
 // Popover component with intelligent positioning
-function AppointmentPopover({ appointment, anchorRect, anchorOffset, onClose }: { appointment: Appointment | null; anchorRect: DOMRect | null; anchorOffset?: { dx: number; dy: number } | null; onClose: () => void }) {
+function AppointmentPopover({
+  appointment,
+  anchorRect,
+  anchorOffset,
+  inside,
+  onClose,
+}: {
+  appointment: Appointment | null
+  anchorRect: DOMRect | null
+  anchorOffset?: { dx: number; dy: number } | null
+  inside: boolean
+  onClose: () => void
+}) {
   const ref = useRef<HTMLDivElement | null>(null)
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const [obs, setObs] = useState<string>("")
 
+  // Id derivado y seguro
+  const apptId = appointment?.id ?? null
+
+  // Posicionamiento del popover
   useLayoutEffect(() => {
     if (!appointment || !anchorRect) return
     const el = ref.current
@@ -573,7 +598,6 @@ function AppointmentPopover({ appointment, anchorRect, anchorOffset, onClose }: 
     const width = el?.offsetWidth ?? fallbackWidth
     const height = el?.offsetHeight ?? fallbackHeight
 
-    // Base coordinates: if anchorOffset provided (day view click) use click point; else anchor top-right
     let baseX: number
     let baseY: number
     if (anchorOffset) {
@@ -584,60 +608,93 @@ function AppointmentPopover({ appointment, anchorRect, anchorOffset, onClose }: 
       baseY = anchorRect.top
     }
 
-    // Prefer placing to the right of click/anchor
     let x = baseX + margin
-    // If overflow right, try left of anchor/point
-    if (x + width > window.innerWidth - margin) {
-      x = baseX - width - margin
-    }
+    if (x + width > window.innerWidth - margin) x = baseX - width - margin
     if (x < margin) x = margin
 
-    // Vertical: center around click point if possible when using offset, else align top
-    let y: number
-    if (anchorOffset) {
-      y = baseY - height / 2
-    } else {
-      y = baseY
-    }
-    if (y + height > window.innerHeight - margin) {
-      y = window.innerHeight - height - margin
-    }
+    let y = anchorOffset ? baseY - height / 2 : baseY
+    if (y + height > window.innerHeight - margin) y = window.innerHeight - height - margin
     if (y < margin) y = margin
+
     setPos({ x, y })
   }, [appointment, anchorRect, anchorOffset])
+
+  // Cargar/actualizar "Observación" desde la API (y refrescar al guardar)
+  useEffect(() => {
+    if (!apptId) return
+    let cancelled = false
+
+    // valor inicial
+    setObs((appointment?.notes ?? "").trim())
+
+    async function fetchObs() {
+      try {
+        const res = await fetch(`/api/appointments/${apptId}/observaciones`, { cache: "no-store" })
+        if (!cancelled) {
+          if (res.ok) {
+            const data = await res.json()
+            const txt = (data?.text ?? "").trim()
+            setObs(txt || "Sin observaciones.")
+          } else if (res.status === 404) {
+            setObs("Sin observaciones.")
+          } else {
+            setObs("Sin observaciones.")
+          }
+        }
+      } catch {
+        if (!cancelled) setObs("Sin observaciones.")
+      }
+    }
+
+    if (inside) fetchObs()
+
+    const handler = (e: Event) => {
+      const id = (e as CustomEvent).detail?.id as string | undefined
+      if (id && id === apptId) fetchObs()
+    }
+    window.addEventListener("obs:saved", handler as EventListener)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener("obs:saved", handler as EventListener)
+    }
+  }, [apptId, inside, appointment?.notes])
 
   if (!appointment || !anchorRect || !pos) return null
   const s = new Date(appointment.start)
   const e = new Date(appointment.end)
+
   return (
     <div className={styles.popoverBackdrop} onClick={onClose}>
       <div
         ref={ref}
         className={styles.popover}
         style={{ top: pos.y, left: pos.x }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(evt) => evt.stopPropagation()}
       >
-        <div className={styles.popoverHeader}>
-          <span className={styles.popoverStatus + ' ' + styles[`status_${appointment.status}`]} />
-          <h3 className={styles.popoverTitle}>{appointment.title}</h3>
-        </div>
+        {/* Horario */}
         <div className={styles.popoverSection}>
           <div className={styles.popoverLabel}>Horario</div>
-          <div className={styles.popoverValue}>{s.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {e.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+          <div className={styles.popoverValue}>
+            {s.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} –{" "}
+            {e.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </div>
         </div>
+
+        {/* Estado */}
         <div className={styles.popoverSection}>
           <div className={styles.popoverLabel}>Estado</div>
           <div className={styles.popoverValue}>{STATUS_LABELS[appointment.status]}</div>
         </div>
-        {appointment.notes && (
-          <div className={styles.popoverSection}>
-            <div className={styles.popoverLabel}>Notas</div>
-            <div className={styles.popoverNotes}>{appointment.notes}</div>
-          </div>
-        )}
+
+        {/* Observación */}
+        <div className={styles.popoverSection}>
+          <div className={styles.popoverLabel}>Observación</div>
+          <div className={styles.popoverValue}>{obs || "Sin observaciones."}</div>
+        </div>
+
         <div className={styles.popoverActionsInfo}>Click fuera para cerrar</div>
       </div>
     </div>
   )
 }
-

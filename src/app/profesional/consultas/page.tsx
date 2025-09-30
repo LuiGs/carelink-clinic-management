@@ -12,6 +12,5 @@ export default async function ConsultasPage() {
       <ConsultasContent />
     </div>
   );
-  );
 }
 

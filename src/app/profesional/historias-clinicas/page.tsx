@@ -12,5 +12,4 @@ export default async function HistoriasClinicasPage() {
       <HistoriasClinicasContent />
     </div>
   );
-  );
 }

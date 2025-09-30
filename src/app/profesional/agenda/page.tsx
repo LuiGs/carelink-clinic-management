@@ -4,8 +4,7 @@ import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 're
 import styles from './agenda.module.css'
 import { useHoverWithin } from "@/hooks/useHoverWithin";
 import { AppointmentStatus } from '@prisma/client'
-import ProfesionalSidebar from '@/components/ui/profesional-sidebar'
-import ProfesionalTopbar from '@/components/ui/profesional-topbar'
+
 
 
 type Appointment = {
@@ -78,7 +77,6 @@ function minutesSinceStartOfGrid(date: Date) {
 
 
 export default function AgendaPage() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [view, setView] = useState<View>('week')
   const [date, setDate] = useState<Date>(new Date())
   const [loading, setLoading] = useState(false)
@@ -91,7 +89,7 @@ export default function AgendaPage() {
   const [search, setSearch] = useState('')
   const hoverTimerRef = useRef<number | null>(null)
   const lastHoverIdRef = useRef<string | null>(null)
-  const { ref: calRef, inside } = useHoverWithin<HTMLDivElement>();
+  const { ref: inside } = useHoverWithin<HTMLDivElement>();
 
 
   // Track anchor element rect on scroll/resize for dynamic popover positioning
@@ -227,24 +225,7 @@ function navigateToAppointment(a: Appointment) {
   }, [appointments, statusFilter, search])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <ProfesionalSidebar 
-        userRole="PROFESIONAL" 
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
-      />
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Topbar */}
-        <ProfesionalTopbar 
-          userName="Dr. Profesional"
-          userEmail="doctor@carelink.com"
-          sidebarCollapsed={sidebarCollapsed}
-          setSidebarCollapsed={setSidebarCollapsed}
-        />
-        {/* Agenda Content */}
-    <main ref={calRef} className="px-6 lg:px-8 py-6 space-y-4 w-full">
+    <main className="px-6 lg:px-8 py-6 space-y-4 w-full">
           <div className="flex flex-col gap-3">
             <div className={`flex flex-wrap items-center gap-2 bg-white ${styles.borderAgenda} rounded-lg p-3 shadow-sm`}>
               <div className="flex items-center gap-2">
@@ -358,7 +339,7 @@ function navigateToAppointment(a: Appointment) {
             appointment={active}
             anchorRect={anchorRect}
             anchorOffset={anchorOffset}
-            inside={inside}
+            inside={inside.current !== null}
             onClose={() => {
               setActive(null)
               setAnchorRect(null)
@@ -367,8 +348,6 @@ function navigateToAppointment(a: Appointment) {
             }}
           />
         </main>
-      </div>
-    </div>
   )
 }
 

@@ -9,9 +9,3 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
 })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
-
-declare global {
-  // evita múltiples instancias en dev (HMR)
-  var prisma: PrismaClient | undefined;
-}
-

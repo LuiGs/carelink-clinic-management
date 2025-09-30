@@ -6,7 +6,8 @@ import {
   Bell, 
   ChevronRight,
   LogOut,
-  User
+  User,
+  Home
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -16,17 +17,26 @@ interface TopbarProps {
 }
 
 const pathTitles: Record<string, string> = {
-  '/gerente': 'Dashboard',
+  '/gerente': 'Inicio',
   '/gerente/usuarios': 'Usuarios',
   '/gerente/reportes': 'Reportes', 
   '/gerente/auditoria': 'Auditoría',
   '/gerente/organizacion': 'Organización',
   '/gerente/configuracion': 'Configuración',
+  '/gerente/perfil': 'Mi Perfil',
 }
 
 export default function GerenciaTopbar({ userName, userEmail }: TopbarProps) {
   const pathname = usePathname()
   const currentTitle = pathTitles[pathname] || 'Gerencia'
+
+  const handleGoHome = () => {
+    window.location.href = '/'
+  }
+
+  const handlePerfilClick = () => {
+    window.location.href = '/gerente/perfil'
+  }
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -69,6 +79,19 @@ export default function GerenciaTopbar({ userName, userEmail }: TopbarProps) {
 
         {/* Right section - Search, notifications, user */}
         <div className="flex items-center space-x-4">
+          {/* Home Button */}
+          <Button 
+            type="button"
+            variant="ghost" 
+            size="sm" 
+            onClick={handleGoHome}
+            className="flex items-center space-x-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+            title="Volver al inicio"
+          >
+            <Home className="h-4 w-4" />
+            <span className="hidden lg:inline">Inicio</span>
+          </Button>
+
           {/* Search */}
           <div className="relative hidden sm:block">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -109,7 +132,10 @@ export default function GerenciaTopbar({ userName, userEmail }: TopbarProps) {
               
               {/* Dropdown menu */}
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                <button 
+                  onClick={handlePerfilClick}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                >
                   <User className="h-4 w-4" />
                   <span>Mi Perfil</span>
                 </button>

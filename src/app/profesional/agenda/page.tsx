@@ -3,8 +3,10 @@
 import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react'
 import styles from './agenda.module.css'
 import { useHoverWithin } from "@/hooks/useHoverWithin";
+import { AppointmentStatus } from '@prisma/client'
+import ProfesionalSidebar from '@/components/ui/profesional-sidebar'
+import ProfesionalTopbar from '@/components/ui/profesional-topbar'
 
-type AppointmentStatus = 'PENDING' | 'WAITING' | 'COMPLETED' | 'CANCELED'
 
 type Appointment = {
   id: string
@@ -21,10 +23,12 @@ type View = 'day' | 'week' | 'month'
 
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  PENDING: 'Pendiente',
-  WAITING: 'En sala de espera',
-  COMPLETED: 'Finalizado',
-  CANCELED: 'Eliminado',
+  PROGRAMADO: 'Programado',
+  CONFIRMADO: 'Confirmado',
+  EN_SALA_DE_ESPERA: 'En sala de espera',
+  COMPLETADO: 'Completado',
+  CANCELADO: 'Cancelado',
+  NO_ASISTIO: 'No asistió',
 }
 
 function startOfDay(d: Date) {
@@ -71,8 +75,7 @@ function minutesSinceStartOfGrid(date: Date) {
 }
 // removed percent-based totalGridMinutes; using px-based layout now
 
-import ProfesionalSidebar from '@/components/ui/profesional-sidebar'
-import ProfesionalTopbar from '@/components/ui/profesional-topbar'
+
 
 export default function AgendaPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -259,7 +262,7 @@ function navigateToAppointment(a: Appointment) {
             <div className={`flex flex-col gap-2 bg-white ${styles.borderAgenda} rounded-lg p-3 shadow-sm`}>
               <div className="flex flex-wrap gap-2 items-center">
                 <div className="flex gap-1 flex-wrap items-center">
-                  {(['PENDING','WAITING','COMPLETED','CANCELED'] as AppointmentStatus[]).map(s => {
+                  {(Object.values(AppointmentStatus) as AppointmentStatus[]).map(s => {
                     const active = statusFilter.includes(s)
                     return (
                       <button key={s} type="button" onClick={() => toggleStatus(s)}
@@ -372,7 +375,7 @@ function navigateToAppointment(a: Appointment) {
 function StatusLegend() {
   return (
     <div className={styles.legend}> 
-      {(['PENDING', 'WAITING', 'COMPLETED', 'CANCELED'] as AppointmentStatus[]).map((s) => (
+      {(Object.values(AppointmentStatus) as AppointmentStatus[]).map((s) => (
         <div key={s} className={styles.legendItem}>
           <span className={`${styles.badge} ${styles[`status_${s}`]}`} />
           <span>{STATUS_LABELS[s]}</span>

@@ -27,6 +27,9 @@ export const createPatientSchema = z.object({
     }),
   genero: z.enum(['Masculino', 'Femenino', 'Otro'], { message: 'El género es obligatorio' }),
   
+  // Estado del paciente
+  activo: z.boolean().default(true),
+  
   // Datos de contacto (opcionales)
   telefono: z.string().optional(),
   celular: z.string().optional(),
@@ -52,7 +55,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    if (currentUser.role !== 'MESA_ENTRADA' && currentUser.role !== 'GERENTE') {
+    if (!currentUser.roles.includes('MESA_ENTRADA') && !currentUser.roles.includes('GERENTE')) {
       return NextResponse.json({ error: 'No tienes permisos para ver los pacientes' }, { status: 403 })
     }
 
@@ -99,7 +102,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
     
-    if (currentUser.role !== 'MESA_ENTRADA' && currentUser.role !== 'GERENTE') {
+    if (!currentUser.roles.includes('MESA_ENTRADA') && !currentUser.roles.includes('GERENTE')) {
       return NextResponse.json({ error: 'No tienes permisos para crear pacientes' }, { status: 403 })
     }
 
@@ -134,6 +137,7 @@ export async function POST(request: NextRequest) {
         contactoEmergenciaNombre: validatedData.contactoEmergenciaNombre || null,
         contactoEmergenciaTelefono: validatedData.contactoEmergenciaTelefono || null,
         contactoEmergenciaRelacion: validatedData.contactoEmergenciaRelacion || null,
+        activo: validatedData.activo,
         createdBy: currentUser.id,
       },
       include: {

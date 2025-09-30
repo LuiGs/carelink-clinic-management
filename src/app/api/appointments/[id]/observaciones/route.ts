@@ -3,14 +3,15 @@
 
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
+import { NextRequest } from "next/server";
 
 // GET /api/appointments/:id/observaciones
 export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
+  _req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ): Promise<Response> {
   try {
-    const { id } = params;
+    const { id } = await context.params;
     if (!id) return Response.json({ error: "MISSING_ID" }, { status: 400 });
 
     const appt = await prisma.appointment.findUnique({
@@ -32,14 +33,15 @@ export async function GET(
 
 // PUT /api/appointments/:id/observaciones
 export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ): Promise<Response> {
   try {
-    const { id } = params;
+    const { id } = await context.params;
     if (!id) return Response.json({ error: "MISSING_ID" }, { status: 400 });
 
-    let body: unknown;
+    type ObservacionesBody = { text: string };
+    let body: ObservacionesBody;
     try {
       body = await req.json();
     } catch {
@@ -47,8 +49,8 @@ export async function PUT(
     }
 
     const text =
-      typeof (body as any)?.text === "string"
-        ? ((body as any).text as string)
+      typeof body?.text === "string"
+        ? body.text
         : null;
     if (text == null)
       return Response.json({ error: "INVALID_BODY" }, { status: 400 });

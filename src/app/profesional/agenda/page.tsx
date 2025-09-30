@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react'
 import styles from './agenda.module.css'
 import { useHoverWithin } from "@/hooks/useHoverWithin";
-import ObservacionPreviewInline from "@/components/ObservacionPreviewInline";
 
 type AppointmentStatus = 'PENDING' | 'WAITING' | 'COMPLETED' | 'CANCELED'
 

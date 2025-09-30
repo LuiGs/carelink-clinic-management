@@ -30,8 +30,12 @@ export default function ConsultaDesdeAgendaPage() {
       window.dispatchEvent(new CustomEvent("appt:deleted", { detail: { id: appointmentId } }));
       // Volver a la agenda
       window.location.href = "/profesional/agenda";
-    } catch (e: any) {
-      alert(e?.message || "Error al eliminar el turno");
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        alert(e.message || "Error al eliminar el turno");
+      } else {
+        alert("Error al eliminar el turno");
+      }
     } finally {
       setDeleting(false);
     }

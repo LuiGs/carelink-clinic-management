@@ -74,8 +74,12 @@ export default function ObservacionesEditor({ appointmentId, className }: Props)
 
       // Notificar a la agenda (si está abierta) para refrescar el preview
       window.dispatchEvent(new CustomEvent("obs:saved", { detail: { id: appointmentId } }));
-    } catch (e: any) {
-      setError(e?.message || "No se pudieron guardar los cambios.");
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(e.message || "No se pudieron guardar los cambios.");
+      } else {
+        setError("No se pudieron guardar los cambios.");
+      }
     } finally {
       setSaving(false);
     }

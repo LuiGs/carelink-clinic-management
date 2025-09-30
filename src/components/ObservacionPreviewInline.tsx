@@ -19,29 +19,45 @@ export default function ObservacionPreviewInline({
 }) {
   const [preview, setPreview] = useState<string>("");
 
-  async function fetchPreview() {
-    try {
-      const res = await fetch(`/api/appointments/${appointmentId}/observaciones`, { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setPreview(toPreview(data?.text ?? ""));
-      } else if (res.status === 404) {
-        setPreview("Sin observaciones.");
-      } else {
-        setPreview("Sin observaciones.");
-      }
-    } catch {
-      setPreview("Sin observaciones.");
-    }
-  }
 
   useEffect(() => {
     if (!active || !appointmentId) return;
-    fetchPreview();
+    // Move fetchPreview inside useEffect to avoid dependency warning
+    (async () => {
+      try {
+        const res = await fetch(`/api/appointments/${appointmentId}/observaciones`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setPreview(toPreview(data?.text ?? ""));
+        } else if (res.status === 404) {
+          setPreview("Sin observaciones.");
+        } else {
+          setPreview("Sin observaciones.");
+        }
+      } catch {
+        setPreview("Sin observaciones.");
+      }
+    })();
   }, [appointmentId, active]);
 
   // refrescar cuando el editor guarda
   useEffect(() => {
+    const fetchPreview = async () => {
+      try {
+        const res = await fetch(`/api/appointments/${appointmentId}/observaciones`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setPreview(toPreview(data?.text ?? ""));
+        } else if (res.status === 404) {
+          setPreview("Sin observaciones.");
+        } else {
+          setPreview("Sin observaciones.");
+        }
+      } catch {
+        setPreview("Sin observaciones.");
+      }
+    };
+
     const handler = (e: Event) => {
       const id = (e as CustomEvent).detail?.id;
       if (id === appointmentId) fetchPreview();

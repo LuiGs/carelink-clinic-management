@@ -6,6 +6,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import { Pie, Bar } from 'react-chartjs-2';
 import { AppointmentStatus } from '@prisma/client';
 import { APPOINTMENT_STATUS_META, getStatusLabel } from '@/lib/appointment-status';
+import { DatePicker } from '@/components/ui/date-picker';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
@@ -54,35 +55,73 @@ const generateColors = (count: number) => {
   return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
 };
 
+const getDefaultDateRange = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const from = new Date(today);
+  from.setDate(from.getDate() - 30);
+  return { from, to: today };
+};
+
 export default function ProfesionalPage() {
   const [stats, setStats] = useState<ProfessionalStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [hiddenDatasets, setHiddenDatasets] = useState<Set<number>>(new Set());
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [allTime, setAllTime] = useState(false);
   const chartRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const currentYear = new Date().getFullYear();
 
   // Initialize default dates (last 30 days)
   useEffect(() => {
-    const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setDate(lastMonth.getDate() - 30);
-    
-    setDateFrom(lastMonth.toISOString().split('T')[0]);
-    setDateTo(today.toISOString().split('T')[0]);
+    const { from, to } = getDefaultDateRange();
+    setDateFrom(from);
+    setDateTo(to);
   }, []);
+
+  const resetDateFilters = () => {
+    const { from, to } = getDefaultDateRange();
+    setAllTime(false);
+    setDateFrom(new Date(from));
+    setDateTo(new Date(to));
+    setRefreshKey((value) => value + 1);
+  };
+
+  const enableAllTime = () => {
+    setAllTime(true);
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setRefreshKey((value) => value + 1);
+  };
 
   // Fetch stats when dates change
   useEffect(() => {
-    if (!dateFrom || !dateTo) return;
-
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const params = new URLSearchParams({
-          dateFrom,
-          dateTo
-        });
+
+        let params = new URLSearchParams();
+
+        if (!allTime) {
+          if (!dateFrom || !dateTo) return;
+
+          const from = new Date(dateFrom);
+          from.setHours(0, 0, 0, 0);
+
+          const to = new Date(dateTo);
+          to.setHours(0, 0, 0, 0);
+
+          if (to < from) {
+            return;
+          }
+
+          params = new URLSearchParams({
+            dateFrom: from.toISOString().split('T')[0],
+            dateTo: to.toISOString().split('T')[0]
+          });
+        }
 
         const response = await fetch(`/api/professional-stats?${params.toString()}`);
         if (!response.ok) throw new Error('Error fetching stats');
@@ -97,7 +136,7 @@ export default function ProfesionalPage() {
     };
 
     fetchStats();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, refreshKey, allTime]);
 
   // Prepare chart data
   const obraSocialChartData = stats ? {
@@ -226,26 +265,46 @@ export default function ProfesionalPage() {
             <p className="text-gray-600">Resumen de tu actividad profesional</p>
           </div>
           
-          <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex flex-wrap items-center gap-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm w-full">
             <Filter className="h-4 w-4 text-gray-500" />
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Desde:</label>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            <div className="flex items-center gap-2 flex-1 min-w-[240px]">
+              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Desde:</label>
+              <DatePicker
+                date={dateFrom}
+                onDateChange={setDateFrom}
+                placeholder="Selecciona una fecha"
+                captionLayout="dropdown"
+                fromYear={currentYear - 10}
+                toYear={currentYear + 5}
+                className="text-sm flex-1 min-w-[160px]"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Hasta:</label>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            <div className="flex items-center gap-2 flex-1 min-w-[240px]">
+              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Hasta:</label>
+              <DatePicker
+                date={dateTo}
+                onDateChange={setDateTo}
+                placeholder="Selecciona una fecha"
+                captionLayout="dropdown"
+                fromYear={currentYear - 10}
+                toYear={currentYear + 5}
+                className="text-sm flex-1 min-w-[160px]"
               />
             </div>
+            <button
+              type="button"
+              onClick={resetDateFilters}
+              className="ml-auto shrink-0 rounded-md border border-emerald-200 px-4 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50"
+            >
+              Limpiar filtro
+            </button>
+            <button
+              type="button"
+              onClick={enableAllTime}
+              className="shrink-0 rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              Todos los tiempos
+            </button>
           </div>
         </div>
 

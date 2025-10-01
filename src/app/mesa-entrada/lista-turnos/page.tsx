@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Search, User, Calendar, Clock, ChevronRight } from 'lucide-react'
+import { DatePicker } from '@/components/ui/date-picker'
 import { AppointmentStatus } from '@prisma/client'
 
 // Types
@@ -132,22 +133,25 @@ export default function ListaTurnosPage() {
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [appointmentSearchTerm, setAppointmentSearchTerm] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined)
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined)
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingProfessionals, setLoadingProfessionals] = useState(true)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
 
+  const currentYear = new Date().getFullYear()
+
   // Initialize default dates
   useEffect(() => {
     const today = new Date()
-    const nextMonth = new Date()
+    today.setHours(0, 0, 0, 0)
+    const nextMonth = new Date(today)
     nextMonth.setDate(nextMonth.getDate() + 30)
     
-    setDateFrom(today.toISOString().split('T')[0])
-    setDateTo(nextMonth.toISOString().split('T')[0])
+    setDateFrom(today)
+    setDateTo(nextMonth)
   }, [])
 
   // Fetch professionals on component mount
@@ -185,19 +189,25 @@ export default function ListaTurnosPage() {
       try {
         setLoading(true)
         // Use selected date range or default to next 30 days
-        let from = new Date()
-        let to = new Date()
-        
-        if (dateFrom && dateTo) {
-          from = new Date(dateFrom)
-          to = new Date(dateTo)
-          // Add one day to 'to' date to include the entire day
-          to.setDate(to.getDate() + 1)
-        } else {
-          // Default to next 30 days
-          to.setDate(to.getDate() + 30)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        const from = dateFrom ? new Date(dateFrom) : new Date(today)
+        from.setHours(0, 0, 0, 0)
+
+        const toBase = dateTo ? new Date(dateTo) : new Date(from)
+        toBase.setHours(0, 0, 0, 0)
+
+        if (!dateTo) {
+          toBase.setDate(toBase.getDate() + 30)
+        } else if (toBase < from) {
+          toBase.setTime(from.getTime())
         }
-        
+
+        // Add one day to 'to' date to include the entire selected day
+        const to = new Date(toBase)
+        to.setDate(to.getDate() + 1)
+
         const params = new URLSearchParams({
           from: from.toISOString(),
           to: to.toISOString(),
@@ -350,20 +360,26 @@ export default function ListaTurnosPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha desde</label>
-                    <input
-                      type="date"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    <DatePicker
+                      date={dateFrom}
+                      onDateChange={(value) => setDateFrom(value)}
+                      placeholder="Selecciona una fecha"
+                      captionLayout="dropdown"
+                      fromYear={currentYear - 10}
+                      toYear={currentYear + 5}
+                      className="text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha hasta</label>
-                    <input
-                      type="date"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    <DatePicker
+                      date={dateTo}
+                      onDateChange={(value) => setDateTo(value)}
+                      placeholder="Selecciona una fecha"
+                      captionLayout="dropdown"
+                      fromYear={currentYear - 10}
+                      toYear={currentYear + 5}
+                      className="text-sm"
                     />
                   </div>
                 </div>
@@ -384,8 +400,8 @@ export default function ListaTurnosPage() {
                 {(dateFrom || dateTo || appointmentSearchTerm) && (
                   <button
                     onClick={() => {
-                      setDateFrom('')
-                      setDateTo('')
+                      setDateFrom(undefined)
+                      setDateTo(undefined)
                       setAppointmentSearchTerm('')
                     }}
                     className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
@@ -412,8 +428,8 @@ export default function ListaTurnosPage() {
                 <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                 <p className="text-lg font-medium mb-2">No hay turnos programados</p>
                 <p className="text-sm">
-                  {dateFrom && dateTo 
-                    ? `No hay turnos entre ${new Date(dateFrom).toLocaleDateString('es-ES')} y ${new Date(dateTo).toLocaleDateString('es-ES')}`
+                  {dateFrom && dateTo
+                    ? `No hay turnos entre ${dateFrom.toLocaleDateString('es-ES')} y ${dateTo.toLocaleDateString('es-ES')}`
                     : 'Este profesional no tiene turnos en los próximos 30 días'
                   }
                 </p>

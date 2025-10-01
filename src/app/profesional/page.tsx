@@ -259,52 +259,59 @@ export default function ProfesionalPage() {
     <main className="flex-1 p-5 md:p-8">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Header with date filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Indicadores</h1>
             <p className="text-gray-600">Resumen de tu actividad profesional</p>
           </div>
           
-          <div className="flex flex-wrap items-center gap-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm w-full">
-            <Filter className="h-4 w-4 text-gray-500" />
-            <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Desde:</label>
-              <DatePicker
-                date={dateFrom}
-                onDateChange={setDateFrom}
-                placeholder="Selecciona una fecha"
-                captionLayout="dropdown"
-                fromYear={currentYear - 10}
-                toYear={currentYear + 5}
-                className="text-sm flex-1 min-w-[160px]"
-              />
+          <div className="w-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <span>Filtrar por fecha</span>
             </div>
-            <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Hasta:</label>
-              <DatePicker
-                date={dateTo}
-                onDateChange={setDateTo}
-                placeholder="Selecciona una fecha"
-                captionLayout="dropdown"
-                fromYear={currentYear - 10}
-                toYear={currentYear + 5}
-                className="text-sm flex-1 min-w-[160px]"
-              />
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Desde</label>
+                <DatePicker
+                  date={dateFrom}
+                  onDateChange={setDateFrom}
+                  placeholder="Selecciona una fecha"
+                  captionLayout="dropdown"
+                  fromYear={currentYear - 10}
+                  toYear={currentYear + 5}
+                  className="text-sm w-full"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Hasta</label>
+                <DatePicker
+                  date={dateTo}
+                  onDateChange={setDateTo}
+                  placeholder="Selecciona una fecha"
+                  captionLayout="dropdown"
+                  fromYear={currentYear - 10}
+                  toYear={currentYear + 5}
+                  className="text-sm w-full"
+                />
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={resetDateFilters}
-              className="ml-auto shrink-0 rounded-md border border-emerald-200 px-4 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50"
-            >
-              Limpiar filtro
-            </button>
-            <button
-              type="button"
-              onClick={enableAllTime}
-              className="shrink-0 rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-            >
-              Todos los tiempos
-            </button>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+              <button
+                type="button"
+                onClick={resetDateFilters}
+                className="w-full rounded-md border border-emerald-200 px-4 py-1.5 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 sm:w-auto"
+              >
+                Limpiar filtro
+              </button>
+              <button
+                type="button"
+                onClick={enableAllTime}
+                className="w-full rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 sm:w-auto"
+              >
+                Todos los tiempos
+              </button>
+            </div>
           </div>
         </div>
 

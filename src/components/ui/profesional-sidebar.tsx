@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { cn } from '@/lib/utils'
 import {
   Calendar,
   Users,
@@ -20,6 +21,8 @@ import { Button } from '@/components/ui/button'
 
 interface ProfesionalSidebarProps {
   userRole: string
+  className?: string
+  onNavigate?: () => void
 }
 
 const menuItems = [
@@ -69,7 +72,9 @@ const menuItems = [
 
 export default function ProfesionalSidebar({ 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  userRole
+  userRole,
+  className,
+  onNavigate
 }: ProfesionalSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
@@ -81,15 +86,19 @@ export default function ProfesionalSidebar({
 
   const handleNavigation = (href: string) => {
     router.push(href)
+    if (onNavigate) {
+      onNavigate()
+    }
   }
 
   return (
-    <div className={`
-      bg-white border-r border-gray-200 
-      transition-all duration-300 ease-in-out
-      ${isCollapsed ? 'w-16' : 'w-64'}
-      flex flex-col min-h-screen
-    `}>
+    <div
+      className={cn(
+        'bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex flex-col min-h-screen',
+        isCollapsed ? 'w-16' : 'w-64',
+        className
+      )}
+    >
       {/* Header */}
       <div className="p-2 border-b border-gray-200">
         {!isCollapsed ? (
@@ -113,7 +122,7 @@ export default function ProfesionalSidebar({
               variant="ghost"
               size="sm"
               onClick={toggleCollapse}
-              className="p-1 hover:bg-gray-100 flex-shrink-0"
+              className="hidden lg:inline-flex p-1 hover:bg-gray-100 flex-shrink-0"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -136,7 +145,7 @@ export default function ProfesionalSidebar({
                 variant="ghost"
                 size="sm"
                 onClick={toggleCollapse}
-                className="p-1 hover:bg-gray-100 w-8 h-8"
+                className="hidden lg:inline-flex w-8 h-8 p-1 hover:bg-gray-100"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

@@ -36,6 +36,12 @@ import {
 } from "@/components/ui/dialog"
 import { APPOINTMENT_STATUS_META, getStatusLabel } from '@/lib/appointment-status'
 
+const ACTIVE_APPOINTMENT_STATUSES: AppointmentStatus[] = [
+  AppointmentStatus.PROGRAMADO,
+  AppointmentStatus.CONFIRMADO,
+  AppointmentStatus.EN_SALA_DE_ESPERA,
+]
+
 type FeedbackState = {
   type: "success" | "error"
   message: string
@@ -418,23 +424,11 @@ export default function ConsultaDesdeAgendaPage() {
 
   const { appointment, patientMedications, relatedAppointments } = detail
 
-  const canFinalize = [
-    AppointmentStatus.PROGRAMADO,
-    AppointmentStatus.CONFIRMADO,
-    AppointmentStatus.EN_SALA_DE_ESPERA,
-  ].includes(appointment.estado)
+  const canFinalize = ACTIVE_APPOINTMENT_STATUSES.includes(appointment.estado)
 
-  const canMarkNoShow = [
-    AppointmentStatus.PROGRAMADO,
-    AppointmentStatus.CONFIRMADO,
-    AppointmentStatus.EN_SALA_DE_ESPERA,
-  ].includes(appointment.estado)
+  const canMarkNoShow = ACTIVE_APPOINTMENT_STATUSES.includes(appointment.estado)
 
-  const canCancel = [
-    AppointmentStatus.PROGRAMADO,
-    AppointmentStatus.CONFIRMADO,
-    AppointmentStatus.EN_SALA_DE_ESPERA,
-  ].includes(appointment.estado)
+  const canCancel = ACTIVE_APPOINTMENT_STATUSES.includes(appointment.estado)
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">

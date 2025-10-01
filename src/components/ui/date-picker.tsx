@@ -20,7 +20,7 @@ interface DatePickerProps {
   placeholder?: string
   disabled?: boolean
   className?: string
-  captionLayout?: "label" | "dropdown" | "buttons"
+  captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years"
   fromYear?: number
   toYear?: number
 }

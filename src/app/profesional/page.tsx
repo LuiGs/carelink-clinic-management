@@ -5,6 +5,7 @@ import { Calendar, Clock, Users, TrendingUp, Filter, Loader2 } from 'lucide-reac
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
 import { AppointmentStatus } from '@prisma/client';
+import { APPOINTMENT_STATUS_META, getStatusLabel } from '@/lib/appointment-status';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
@@ -35,23 +36,13 @@ type ProfessionalStats = {
   averageDaily: number;
 };
 
-// Status labels and colors
-const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  PROGRAMADO: 'Programado',
-  CONFIRMADO: 'Confirmado',
-  EN_SALA_DE_ESPERA: 'En sala de espera',
-  COMPLETADO: 'Completado',
-  CANCELADO: 'Cancelado',
-  NO_ASISTIO: 'No asistió',
-}
-
 const STATUS_COLORS: Record<AppointmentStatus, string> = {
-  PROGRAMADO: '#3B82F6',
-  CONFIRMADO: '#10B981',
-  EN_SALA_DE_ESPERA: '#F59E0B',
-  COMPLETADO: '#059669',
+  PROGRAMADO: '#93C5FD',
+  CONFIRMADO: '#5EEAD4',
+  EN_SALA_DE_ESPERA: '#FBBF24',
+  COMPLETADO: '#22C55E',
   CANCELADO: '#EF4444',
-  NO_ASISTIO: '#6B7280',
+  NO_ASISTIO: '#9CA3AF',
 }
 
 // Generate colors for obra social pie chart
@@ -122,7 +113,7 @@ export default function ProfesionalPage() {
   } : null;
 
   const statusChartData = stats ? {
-    labels: Object.keys(stats.statusCounts).map(status => STATUS_LABELS[status as AppointmentStatus]),
+    labels: Object.keys(stats.statusCounts).map(status => getStatusLabel(status as AppointmentStatus)),
     datasets: [{
       label: 'Turnos',
       data: Object.values(stats.statusCounts),
@@ -441,15 +432,8 @@ export default function ProfesionalPage() {
                       {appointment.paciente}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${{
-                        PROGRAMADO: 'bg-blue-100 text-blue-800',
-                        CONFIRMADO: 'bg-green-100 text-green-800',
-                        EN_SALA_DE_ESPERA: 'bg-yellow-100 text-yellow-800',
-                        COMPLETADO: 'bg-emerald-100 text-emerald-800',
-                        CANCELADO: 'bg-red-100 text-red-800',
-                        NO_ASISTIO: 'bg-gray-100 text-gray-800',
-                      }[appointment.estado]}`}>
-                        {STATUS_LABELS[appointment.estado]}
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${APPOINTMENT_STATUS_META[appointment.estado].badgeClass}`}>
+                        {getStatusLabel(appointment.estado)}
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">

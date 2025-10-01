@@ -1,9 +1,11 @@
 'use client'
 
 import React, { useEffect, useMemo, useState, useLayoutEffect, useRef } from 'react'
+import Link from 'next/link'
 import styles from './agenda.module.css'
 import { useHoverWithin } from "@/hooks/useHoverWithin";
 import { AppointmentStatus } from '@prisma/client'
+import { getStatusLabel } from '@/lib/appointment-status'
 
 
 
@@ -20,15 +22,6 @@ type Appointment = {
 
 type View = 'day' | 'week' | 'month'
 
-
-const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  PROGRAMADO: 'Programado',
-  CONFIRMADO: 'Confirmado',
-  EN_SALA_DE_ESPERA: 'En sala de espera',
-  COMPLETADO: 'Completado',
-  CANCELADO: 'Cancelado',
-  NO_ASISTIO: 'No asistió',
-}
 
 const LOCALE = 'es-ES' as const
 
@@ -250,7 +243,7 @@ function navigateToAppointment(a: Appointment) {
                     return (
                       <button key={s} type="button" onClick={() => toggleStatus(s)}
                         className={`px-2.5 py-1 text-xs md:text-sm rounded-md border ${active ? 'bg-emerald-600 text-white border-emerald-600' : `bg-white ${styles.textAgenda} ${styles.borderCtrl} hover:bg-emerald-50`}`}
-                      ><span >{STATUS_LABELS[s]}</span></button>
+                      ><span >{getStatusLabel(s)}</span></button>
                     )
                   })}
                 </div>
@@ -267,7 +260,7 @@ function navigateToAppointment(a: Appointment) {
                 </div>
               </div>
               <div className={`text-[11px] md:text-xs flex flex-wrap gap-3 ${styles.textAgenda}`}>
-                <span>Filtrando: {statusFilter.length ? statusFilter.map(s=>STATUS_LABELS[s]).join(', ') : 'Todos los estados'}</span>
+                <span>Filtrando: {statusFilter.length ? statusFilter.map((status) => getStatusLabel(status)).join(', ') : 'Todos los estados'}</span>
                 {search && <span>Búsqueda: “{search}”</span>}
                 <span>Total: {filteredAppointments.length}</span>
               </div>
@@ -359,7 +352,7 @@ function StatusLegend() {
       {(Object.values(AppointmentStatus) as AppointmentStatus[]).map((s) => (
         <div key={s} className={styles.legendItem}>
           <span className={`${styles.badge} ${styles[`status_${s}`]}`} />
-          <span>{STATUS_LABELS[s]}</span>
+          <span>{getStatusLabel(s)}</span>
         </div>
       ))}
     </div>
@@ -403,7 +396,7 @@ function DayView({ date, items, onOpen, onHoverLeave, onClickOpen }: { date: Dat
                     key={a.id}
                     className={`${styles.event} ${styles[`status_${a.status}`]} status_${a.status}`}
                     style={{ top: `${topPx}px`, height: `${heightPx}px` }}
-                    title={`${a.title} (${STATUS_LABELS[a.status]})`}
+                    title={`${a.title} (${getStatusLabel(a.status)})`}
                     onMouseEnter={(e) => { onOpen(a, e.currentTarget as HTMLElement, { x: e.clientX, y: e.clientY }) }}
                     onMouseMove={(e) => { onOpen(a, e.currentTarget as HTMLElement, { x: e.clientX, y: e.clientY }) }}
                     onMouseLeave={() => { onHoverLeave() }}
@@ -476,7 +469,7 @@ function WeekView({ days, items, onOpen, onHoverLeave, onClickOpen }: { days: Da
                     key={a.id}
                     className={`${styles.event} ${styles[`status_${a.status}`]} status_${a.status}`}
                     style={{ top: `${topPx}px`, height: `${heightPx}px` }}
-                    title={`${a.title} (${STATUS_LABELS[a.status]})`}
+                    title={`${a.title} (${getStatusLabel(a.status)})`}
                     onMouseEnter={(e) => { onOpen(a, e.currentTarget as HTMLElement) }}
                     onMouseMove={(e) => { onOpen(a, e.currentTarget as HTMLElement) }}
                     onClick={(e) => { e.stopPropagation(); onClickOpen(a) }}
@@ -686,8 +679,20 @@ function AppointmentPopover({
         {/* Estado */}
         <div className={styles.popoverSection}>
           <div className={styles.popoverLabel}>Estado</div>
-          <div className={styles.popoverValue}>{STATUS_LABELS[appointment.status]}</div>
+          <div className={styles.popoverValue}>{getStatusLabel(appointment.status)}</div>
         </div>
+
+        {appointment.patientId && (
+          <div className={styles.popoverSection}>
+            <div className={styles.popoverLabel}>Paciente</div>
+            <Link
+              href={`/profesional/pacientes?patientId=${appointment.patientId}`}
+              className={`${styles.popoverValue} text-emerald-700 underline`}
+            >
+              Ver ficha completa
+            </Link>
+          </div>
+        )}
 
         {/* Observación */}
         <div className={styles.popoverSection}>

@@ -3,17 +3,18 @@
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { 
-  Calendar, 
-  Users, 
-  FileText, 
-  Settings, 
-  ChevronLeft, 
+import {
+  Calendar,
+  Users,
+  Settings,
+  ChevronLeft,
   ChevronRight,
-  Clock,
   UserCheck,
   ClipboardList,
-  Home
+  Home,
+  Stethoscope,
+  History as HistoryIcon,
+  Clock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -26,44 +27,44 @@ const menuItems = [
     title: 'Inicio',
     icon: Home,
     href: '/profesional',
-    description: 'Página principal'
+    description: 'Resumen y métricas clave',
   },
   {
     title: 'Agenda',
     icon: Calendar,
     href: '/profesional/agenda',
-    description: 'Gestionar agenda y turnos'
+    description: 'Turnos programados y controles',
+  },
+  {
+    title: 'Consultas',
+    icon: Stethoscope,
+    href: '/profesional/consultas',
+    description: 'Documentar diagnósticos y evoluciones',
   },
   {
     title: 'Pacientes',
     icon: Users,
     href: '/profesional/pacientes',
-    description: 'Historial de pacientes'
+    description: 'Fichas, medicaciones y contactos',
   },
   {
-    title: 'Consultas',
-    icon: UserCheck,
-    href: '/profesional/consultas',
-    description: 'Consultas del día'
-  },
-  {
-    title: 'Historias Clínicas',
-    icon: FileText,
+    title: 'Historias clínicas',
+    icon: HistoryIcon,
     href: '/profesional/historias-clinicas',
-    description: 'Historiales médicos'
+    description: 'Trayectoria clínica completa',
   },
   {
     title: 'Reportes',
     icon: ClipboardList,
     href: '/profesional/reportes',
-    description: 'Reportes médicos'
+    description: 'Indicadores y exportaciones',
   },
   {
     title: 'Configuración',
     icon: Settings,
     href: '/profesional/configuracion',
-    description: 'Configuración personal'
-  }
+    description: 'Preferencias personales',
+  },
 ]
 
 export default function ProfesionalSidebar({ 
@@ -149,7 +150,10 @@ export default function ProfesionalSidebar({
         <div className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            const isRootItem = item.href === '/profesional'
+            const isActive = isRootItem
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`)
             
             return (
               <button

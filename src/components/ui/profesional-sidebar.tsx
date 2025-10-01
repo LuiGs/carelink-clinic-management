@@ -3,22 +3,26 @@
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { 
-  Calendar, 
-  Users, 
-  FileText, 
-  Settings, 
-  ChevronLeft, 
+import { cn } from '@/lib/utils'
+import {
+  Calendar,
+  Users,
+  Settings,
+  ChevronLeft,
   ChevronRight,
-  Clock,
   UserCheck,
   ClipboardList,
-  Home
+  Home,
+  Stethoscope,
+  History as HistoryIcon,
+  Clock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface ProfesionalSidebarProps {
   userRole: string
+  className?: string
+  onNavigate?: () => void
 }
 
 const menuItems = [
@@ -26,49 +30,51 @@ const menuItems = [
     title: 'Inicio',
     icon: Home,
     href: '/profesional',
-    description: 'Página principal'
+    description: 'Resumen y métricas clave',
   },
   {
     title: 'Agenda',
     icon: Calendar,
     href: '/profesional/agenda',
-    description: 'Gestionar agenda y turnos'
+    description: 'Turnos programados y controles',
+  },
+  {
+    title: 'Consultas',
+    icon: Stethoscope,
+    href: '/profesional/consultas',
+    description: 'Documentar diagnósticos y evoluciones',
   },
   {
     title: 'Pacientes',
     icon: Users,
     href: '/profesional/pacientes',
-    description: 'Historial de pacientes'
+    description: 'Fichas, medicaciones y contactos',
   },
   {
-    title: 'Consultas',
-    icon: UserCheck,
-    href: '/profesional/consultas',
-    description: 'Consultas del día'
-  },
-  {
-    title: 'Historias Clínicas',
-    icon: FileText,
+    title: 'Historias clínicas',
+    icon: HistoryIcon,
     href: '/profesional/historias-clinicas',
-    description: 'Historiales médicos'
+    description: 'Trayectoria clínica completa',
   },
   {
     title: 'Reportes',
     icon: ClipboardList,
     href: '/profesional/reportes',
-    description: 'Reportes médicos'
+    description: 'Indicadores y exportaciones',
   },
   {
     title: 'Configuración',
     icon: Settings,
     href: '/profesional/configuracion',
-    description: 'Configuración personal'
-  }
+    description: 'Preferencias personales',
+  },
 ]
 
 export default function ProfesionalSidebar({ 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  userRole
+  userRole,
+  className,
+  onNavigate
 }: ProfesionalSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
@@ -80,15 +86,19 @@ export default function ProfesionalSidebar({
 
   const handleNavigation = (href: string) => {
     router.push(href)
+    if (onNavigate) {
+      onNavigate()
+    }
   }
 
   return (
-    <div className={`
-      bg-white border-r border-gray-200 
-      transition-all duration-300 ease-in-out
-      ${isCollapsed ? 'w-16' : 'w-64'}
-      flex flex-col min-h-screen
-    `}>
+    <div
+      className={cn(
+        'bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex flex-col min-h-screen',
+        isCollapsed ? 'w-16' : 'w-64',
+        className
+      )}
+    >
       {/* Header */}
       <div className="p-2 border-b border-gray-200">
         {!isCollapsed ? (
@@ -112,7 +122,7 @@ export default function ProfesionalSidebar({
               variant="ghost"
               size="sm"
               onClick={toggleCollapse}
-              className="p-1 hover:bg-gray-100 flex-shrink-0"
+              className="hidden lg:inline-flex p-1 hover:bg-gray-100 flex-shrink-0"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -135,7 +145,7 @@ export default function ProfesionalSidebar({
                 variant="ghost"
                 size="sm"
                 onClick={toggleCollapse}
-                className="p-1 hover:bg-gray-100 w-8 h-8"
+                className="hidden lg:inline-flex w-8 h-8 p-1 hover:bg-gray-100"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -149,7 +159,10 @@ export default function ProfesionalSidebar({
         <div className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            const isRootItem = item.href === '/profesional'
+            const isActive = isRootItem
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`)
             
             return (
               <button

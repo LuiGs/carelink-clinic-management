@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { AppointmentStatus } from '@prisma/client'
 import { Calendar, Search, Loader2, AlertCircle, CheckCircle2, Stethoscope, Pill, FlaskRound, UserCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { APPOINTMENT_STATUS_META, getStatusLabel } from '@/lib/appointment-status'
 
 interface PatientOption {
   id: string
@@ -22,6 +24,7 @@ interface PatientOption {
   direccion?: string | null
   ciudad?: string | null
   provincia?: string | null
+  codigoPostal?: string | null
 }
 
 interface Diagnosis {
@@ -91,15 +94,6 @@ interface PatientMedication {
 
 type FeedbackState = { type: 'success' | 'error'; message: string } | null
 
-const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  PROGRAMADO: 'Programado',
-  CONFIRMADO: 'Confirmado',
-  EN_SALA_DE_ESPERA: 'En sala de espera',
-  COMPLETADO: 'Completado',
-  CANCELADO: 'Cancelado',
-  NO_ASISTIO: 'No asistió',
-}
-
 const HISTORY_PAGE_SIZE = 10
 
 const formatDateTime = (value: string) => {
@@ -139,6 +133,10 @@ export default function PacientesContent() {
   const [onlyMine, setOnlyMine] = useState(false)
   const [feedback, setFeedback] = useState<FeedbackState>(null)
 
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const initialPatientHandledRef = useRef<string | null>(null)
+
   const totalPages = Math.max(1, Math.ceil(totalAppointments / HISTORY_PAGE_SIZE))
   const startItem = totalAppointments === 0 ? 0 : (historyPage - 1) * HISTORY_PAGE_SIZE + 1
   const endItem = totalAppointments === 0 ? 0 : Math.min(totalAppointments, startItem + appointments.length - 1)
@@ -167,15 +165,25 @@ export default function PacientesContent() {
     loadRecentPatients()
   }, [])
 
-  const fetchPatientHistory = async ({
+  const setPatientQueryParam = useCallback((id: string | null) => {
+    router.replace(id ? `/profesional/pacientes?patientId=${id}` : '/profesional/pacientes', { scroll: false })
+  }, [router])
+
+  const fetchPatientHistory = useCallback(async ({
     patient,
+    patientId,
     page = 1,
     append = false,
+    context,
   }: {
-    patient: PatientOption
+    patient?: PatientOption
+    patientId?: string
     page?: number
     append?: boolean
+    context?: 'select' | 'refresh' | 'pagination' | 'load-more' | 'initial'
   }) => {
+    const id = patient?.id ?? patientId
+    if (!id) return
     try {
       setLoadingHistory(true)
       const params = new URLSearchParams({
@@ -185,24 +193,49 @@ export default function PacientesContent() {
       if (onlyMine) {
         params.set('onlyMine', 'true')
       }
-      const response = await fetch(`/api/professional/patients/${patient.id}/history?${params.toString()}`)
+      const response = await fetch(`/api/professional/patients/${id}/history?${params.toString()}`)
       const data = await response.json()
       if (!response.ok) {
         throw new Error(data.error || 'No se pudo obtener la historia clínica')
       }
-      setSelectedPatient(patient)
+
+      const patientPayload: PatientOption = patient ?? {
+        id: data.patient.id,
+        nombre: data.patient.nombre,
+        apellido: data.patient.apellido,
+        dni: data.patient.dni,
+        fechaNacimiento: data.patient.fechaNacimiento,
+        genero: data.patient.genero,
+        telefono: data.patient.telefono,
+        celular: data.patient.celular,
+        email: data.patient.email,
+        direccion: data.patient.direccion,
+        ciudad: data.patient.ciudad,
+        provincia: data.patient.provincia,
+        codigoPostal: data.patient.codigoPostal,
+      }
+
+      setSelectedPatient(patientPayload)
+      setPatientQueryParam(patientPayload.id)
       setHistoryPage(typeof data.page === 'number' ? data.page : page)
       setTotalAppointments(data.totalAppointments)
       setAppointments((prev) => (append ? [...prev, ...data.appointments] : data.appointments))
       setMedications(data.medications)
-      setFeedback({ type: 'success', message: `Historia actualizada (${data.totalAppointments} turnos)` })
+
+      if (context === 'select') {
+        setFeedback({ type: 'success', message: `Historia actualizada (${data.totalAppointments} turnos)` })
+      } else if (context === 'refresh') {
+        setFeedback({ type: 'success', message: 'Historia actualizada' })
+      } else if (context === 'pagination') {
+        setFeedback(null)
+      }
     } catch (error) {
       console.error(error)
       setFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Error al cargar la historia clínica' })
     } finally {
       setLoadingHistory(false)
     }
-  }
+  }, [onlyMine, setPatientQueryParam])
 
   const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -236,7 +269,7 @@ export default function PacientesContent() {
   const handleSelectPatient = (patient: PatientOption) => {
     setSearchTerm('')
     setPatients([])
-    fetchPatientHistory({ patient, page: 1 })
+    fetchPatientHistory({ patient, page: 1, context: 'select' })
   }
 
   const handleClearSelected = () => {
@@ -245,27 +278,43 @@ export default function PacientesContent() {
     setMedications([])
     setTotalAppointments(0)
     setHistoryPage(1)
+    setPatientQueryParam(null)
+    initialPatientHandledRef.current = null
   }
 
   const handlePageChange = (nextPage: number) => {
     if (!selectedPatient) return
     const safePage = Math.max(1, Math.min(totalPages, nextPage))
-    fetchPatientHistory({ patient: selectedPatient, page: safePage })
+    fetchPatientHistory({ patient: selectedPatient, page: safePage, context: 'pagination' })
   }
 
   const handleLoadMoreAppointments = () => {
     if (!selectedPatient) return
     if (appointments.length >= totalAppointments) return
     const nextPage = historyPage + 1
-    fetchPatientHistory({ patient: selectedPatient, page: nextPage, append: true })
+    fetchPatientHistory({ patient: selectedPatient, page: nextPage, append: true, context: 'load-more' })
   }
 
   useEffect(() => {
     if (selectedPatient) {
-      fetchPatientHistory({ patient: selectedPatient, page: 1 })
+      fetchPatientHistory({ patient: selectedPatient, page: 1, context: 'refresh' })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onlyMine])
+  }, [fetchPatientHistory, onlyMine, selectedPatient])
+
+  useEffect(() => {
+    const patientIdParam = searchParams.get('patientId')
+
+    if (!patientIdParam) {
+      initialPatientHandledRef.current = null
+      return
+    }
+
+    if (selectedPatient?.id === patientIdParam) return
+    if (initialPatientHandledRef.current === patientIdParam) return
+
+    initialPatientHandledRef.current = patientIdParam
+    fetchPatientHistory({ patientId: patientIdParam, page: 1, context: 'initial' })
+  }, [fetchPatientHistory, searchParams, selectedPatient])
 
   const patientContact = useMemo(() => {
     if (!selectedPatient) return null
@@ -293,7 +342,7 @@ export default function PacientesContent() {
           <Link href="/profesional/consultas">
             <Button variant="outline">Ir a consultas</Button>
           </Link>
-          <Link href="/profesional/historias-clinicas">
+          <Link href={selectedPatient ? `/profesional/historias-clinicas?patientId=${selectedPatient.id}` : '/profesional/historias-clinicas'}>
             <Button variant="outline">Ver historias clínicas</Button>
           </Link>
         </div>
@@ -419,7 +468,10 @@ export default function PacientesContent() {
                   <Link href="/profesional/consultas" className="text-sky-600 hover:underline text-xs">
                     Gestionar turno actual »
                   </Link>
-                  <Link href="/profesional/historias-clinicas" className="text-sky-600 hover:underline text-xs">
+                  <Link
+                    href={`/profesional/historias-clinicas${selectedPatient ? `?patientId=${selectedPatient.id}` : ''}`}
+                    className="text-sky-600 hover:underline text-xs"
+                  >
                     Historia clínica completa »
                   </Link>
                   <Button
@@ -469,7 +521,9 @@ export default function PacientesContent() {
                                 <div className="text-xs text-gray-500 mt-1">Obra social: {appointment.obraSocial.nombre}</div>
                               )}
                             </div>
-                            <Badge className="bg-sky-100 text-sky-700">{STATUS_LABELS[appointment.estado]}</Badge>
+                            <Badge className={APPOINTMENT_STATUS_META[appointment.estado].badgeClass}>
+                              {getStatusLabel(appointment.estado)}
+                            </Badge>
                           </div>
 
                           {appointment.diagnoses.length > 0 && (

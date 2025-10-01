@@ -5,6 +5,8 @@ import { Calendar, Clock, Users, TrendingUp, Filter, Loader2 } from 'lucide-reac
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
 import { AppointmentStatus } from '@prisma/client';
+import { APPOINTMENT_STATUS_META, getStatusLabel } from '@/lib/appointment-status';
+import { DatePicker } from '@/components/ui/date-picker';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
@@ -35,23 +37,13 @@ type ProfessionalStats = {
   averageDaily: number;
 };
 
-// Status labels and colors
-const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  PROGRAMADO: 'Programado',
-  CONFIRMADO: 'Confirmado',
-  EN_SALA_DE_ESPERA: 'En sala de espera',
-  COMPLETADO: 'Completado',
-  CANCELADO: 'Cancelado',
-  NO_ASISTIO: 'No asistió',
-}
-
 const STATUS_COLORS: Record<AppointmentStatus, string> = {
-  PROGRAMADO: '#3B82F6',
-  CONFIRMADO: '#10B981',
-  EN_SALA_DE_ESPERA: '#F59E0B',
-  COMPLETADO: '#059669',
+  PROGRAMADO: '#93C5FD',
+  CONFIRMADO: '#5EEAD4',
+  EN_SALA_DE_ESPERA: '#FBBF24',
+  COMPLETADO: '#22C55E',
   CANCELADO: '#EF4444',
-  NO_ASISTIO: '#6B7280',
+  NO_ASISTIO: '#9CA3AF',
 }
 
 // Generate colors for obra social pie chart
@@ -63,35 +55,73 @@ const generateColors = (count: number) => {
   return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
 };
 
+const getDefaultDateRange = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const from = new Date(today);
+  from.setDate(from.getDate() - 30);
+  return { from, to: today };
+};
+
 export default function ProfesionalPage() {
   const [stats, setStats] = useState<ProfessionalStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [hiddenDatasets, setHiddenDatasets] = useState<Set<number>>(new Set());
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [allTime, setAllTime] = useState(false);
   const chartRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const currentYear = new Date().getFullYear();
 
   // Initialize default dates (last 30 days)
   useEffect(() => {
-    const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setDate(lastMonth.getDate() - 30);
-    
-    setDateFrom(lastMonth.toISOString().split('T')[0]);
-    setDateTo(today.toISOString().split('T')[0]);
+    const { from, to } = getDefaultDateRange();
+    setDateFrom(from);
+    setDateTo(to);
   }, []);
+
+  const resetDateFilters = () => {
+    const { from, to } = getDefaultDateRange();
+    setAllTime(false);
+    setDateFrom(new Date(from));
+    setDateTo(new Date(to));
+    setRefreshKey((value) => value + 1);
+  };
+
+  const enableAllTime = () => {
+    setAllTime(true);
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    setRefreshKey((value) => value + 1);
+  };
 
   // Fetch stats when dates change
   useEffect(() => {
-    if (!dateFrom || !dateTo) return;
-
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const params = new URLSearchParams({
-          dateFrom,
-          dateTo
-        });
+
+        let params = new URLSearchParams();
+
+        if (!allTime) {
+          if (!dateFrom || !dateTo) return;
+
+          const from = new Date(dateFrom);
+          from.setHours(0, 0, 0, 0);
+
+          const to = new Date(dateTo);
+          to.setHours(0, 0, 0, 0);
+
+          if (to < from) {
+            return;
+          }
+
+          params = new URLSearchParams({
+            dateFrom: from.toISOString().split('T')[0],
+            dateTo: to.toISOString().split('T')[0]
+          });
+        }
 
         const response = await fetch(`/api/professional-stats?${params.toString()}`);
         if (!response.ok) throw new Error('Error fetching stats');
@@ -106,7 +136,7 @@ export default function ProfesionalPage() {
     };
 
     fetchStats();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, refreshKey, allTime]);
 
   // Prepare chart data
   const obraSocialChartData = stats ? {
@@ -122,7 +152,7 @@ export default function ProfesionalPage() {
   } : null;
 
   const statusChartData = stats ? {
-    labels: Object.keys(stats.statusCounts).map(status => STATUS_LABELS[status as AppointmentStatus]),
+    labels: Object.keys(stats.statusCounts).map(status => getStatusLabel(status as AppointmentStatus)),
     datasets: [{
       label: 'Turnos',
       data: Object.values(stats.statusCounts),
@@ -229,31 +259,58 @@ export default function ProfesionalPage() {
     <main className="flex-1 p-5 md:p-8">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Header with date filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Indicadores</h1>
             <p className="text-gray-600">Resumen de tu actividad profesional</p>
           </div>
           
-          <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <Filter className="h-4 w-4 text-gray-500" />
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Desde:</label>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
+          <div className="w-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <span>Filtrar por fecha</span>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Hasta:</label>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Desde</label>
+                <DatePicker
+                  date={dateFrom}
+                  onDateChange={setDateFrom}
+                  placeholder="Selecciona una fecha"
+                  captionLayout="dropdown"
+                  fromYear={currentYear - 10}
+                  toYear={currentYear + 5}
+                  className="text-sm w-full"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Hasta</label>
+                <DatePicker
+                  date={dateTo}
+                  onDateChange={setDateTo}
+                  placeholder="Selecciona una fecha"
+                  captionLayout="dropdown"
+                  fromYear={currentYear - 10}
+                  toYear={currentYear + 5}
+                  className="text-sm w-full"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+              <button
+                type="button"
+                onClick={resetDateFilters}
+                className="w-full rounded-md border border-emerald-200 px-4 py-1.5 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 sm:w-auto"
+              >
+                Limpiar filtro
+              </button>
+              <button
+                type="button"
+                onClick={enableAllTime}
+                className="w-full rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 sm:w-auto"
+              >
+                Todos los tiempos
+              </button>
             </div>
           </div>
         </div>
@@ -441,15 +498,8 @@ export default function ProfesionalPage() {
                       {appointment.paciente}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${{
-                        PROGRAMADO: 'bg-blue-100 text-blue-800',
-                        CONFIRMADO: 'bg-green-100 text-green-800',
-                        EN_SALA_DE_ESPERA: 'bg-yellow-100 text-yellow-800',
-                        COMPLETADO: 'bg-emerald-100 text-emerald-800',
-                        CANCELADO: 'bg-red-100 text-red-800',
-                        NO_ASISTIO: 'bg-gray-100 text-gray-800',
-                      }[appointment.estado]}`}>
-                        {STATUS_LABELS[appointment.estado]}
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${APPOINTMENT_STATUS_META[appointment.estado].badgeClass}`}>
+                        {getStatusLabel(appointment.estado)}
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">

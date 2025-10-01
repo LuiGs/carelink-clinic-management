@@ -20,6 +20,9 @@ interface DatePickerProps {
   placeholder?: string
   disabled?: boolean
   className?: string
+  captionLayout?: "label" | "dropdown" | "dropdown-months" | "dropdown-years"
+  fromYear?: number
+  toYear?: number
 }
 
 export function DatePicker({
@@ -27,7 +30,10 @@ export function DatePicker({
   onDateChange,
   placeholder = "Selecciona una fecha",
   disabled = false,
-  className
+  className,
+  captionLayout,
+  fromYear,
+  toYear,
 }: DatePickerProps) {
   return (
     <Popover>
@@ -52,6 +58,9 @@ export function DatePicker({
           onSelect={onDateChange}
           initialFocus
           locale={es}
+          captionLayout={captionLayout}
+          fromYear={fromYear}
+          toYear={toYear}
         />
       </PopoverContent>
     </Popover>

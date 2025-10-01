@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Search, User, Calendar, Clock, ChevronRight } from 'lucide-react'
+import { DatePicker } from '@/components/ui/date-picker'
 import { AppointmentStatus } from '@prisma/client'
 
 // Types
@@ -132,22 +133,25 @@ export default function ListaTurnosPage() {
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [appointmentSearchTerm, setAppointmentSearchTerm] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined)
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined)
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingProfessionals, setLoadingProfessionals] = useState(true)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
 
+  const currentYear = new Date().getFullYear()
+
   // Initialize default dates
   useEffect(() => {
     const today = new Date()
-    const nextMonth = new Date()
+    today.setHours(0, 0, 0, 0)
+    const nextMonth = new Date(today)
     nextMonth.setDate(nextMonth.getDate() + 30)
     
-    setDateFrom(today.toISOString().split('T')[0])
-    setDateTo(nextMonth.toISOString().split('T')[0])
+    setDateFrom(today)
+    setDateTo(nextMonth)
   }, [])
 
   // Fetch professionals on component mount
@@ -185,19 +189,25 @@ export default function ListaTurnosPage() {
       try {
         setLoading(true)
         // Use selected date range or default to next 30 days
-        let from = new Date()
-        let to = new Date()
-        
-        if (dateFrom && dateTo) {
-          from = new Date(dateFrom)
-          to = new Date(dateTo)
-          // Add one day to 'to' date to include the entire day
-          to.setDate(to.getDate() + 1)
-        } else {
-          // Default to next 30 days
-          to.setDate(to.getDate() + 30)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        const from = dateFrom ? new Date(dateFrom) : new Date(today)
+        from.setHours(0, 0, 0, 0)
+
+        const toBase = dateTo ? new Date(dateTo) : new Date(from)
+        toBase.setHours(0, 0, 0, 0)
+
+        if (!dateTo) {
+          toBase.setDate(toBase.getDate() + 30)
+        } else if (toBase < from) {
+          toBase.setTime(from.getTime())
         }
-        
+
+        // Add one day to 'to' date to include the entire selected day
+        const to = new Date(toBase)
+        to.setDate(to.getDate() + 1)
+
         const params = new URLSearchParams({
           from: from.toISOString(),
           to: to.toISOString(),
@@ -267,44 +277,44 @@ export default function ListaTurnosPage() {
   }, {} as Record<string, Appointment[]>)
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Lista de Turnos por Profesional</h1>
+      <div>
+        <h1 className="mb-2 text-2xl font-semibold text-gray-900">Lista de Turnos por Profesional</h1>
         <p className="text-gray-600">Busque y seleccione un profesional para ver su agenda de turnos</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left Panel - Professional Selection */}
         <div className="space-y-4">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <User className="h-5 w-5 mr-2 text-emerald-600" />
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
+              <User className="mr-2 h-5 w-5 text-emerald-600" />
               Seleccionar Profesional
             </h2>
             
             {/* Search Input */}
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <input
                 type="text"
                 placeholder="Buscar profesional por nombre o email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full rounded-md border border-gray-300 px-4 py-2 pl-10 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             {/* Professionals List */}
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="max-h-96 space-y-2 overflow-y-auto">
               {loadingProfessionals ? (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600 mx-auto"></div>
-                  <p className="text-sm text-gray-500 mt-2">Cargando profesionales...</p>
+                <div className="py-4 text-center">
+                  <div className="mx-auto h-6 w-6 animate-spin rounded-full border-b-2 border-emerald-600"></div>
+                  <p className="mt-2 text-sm text-gray-500">Cargando profesionales...</p>
                 </div>
               ) : filteredProfessionals.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">
-                  <User className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <div className="py-4 text-center text-gray-500">
+                  <User className="mx-auto mb-2 h-8 w-8 text-gray-400" />
                   <p className="text-sm">
                     {searchTerm ? 'No se encontraron profesionales' : 'No hay profesionales disponibles'}
                   </p>
@@ -314,18 +324,18 @@ export default function ListaTurnosPage() {
                   <button
                     key={professional.id}
                     onClick={() => setSelectedProfessional(professional)}
-                    className={`w-full text-left p-3 rounded-md border transition-all duration-200 ${
+                    className={`w-full rounded-md border p-3 text-left transition-all duration-200 ${
                       selectedProfessional?.id === professional.id
                         ? 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-200'
                         : 'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <div>
                         <h3 className="font-medium text-gray-900">{professional.name}</h3>
                         <p className="text-sm text-gray-600">{professional.email}</p>
                       </div>
-                      <ChevronRight className={`h-4 w-4 transition-transform ${
+                      <ChevronRight className={`h-4 w-4 flex-shrink-0 transition-transform ${
                         selectedProfessional?.id === professional.id ? 'rotate-90' : ''
                       }`} />
                     </div>
@@ -338,45 +348,51 @@ export default function ListaTurnosPage() {
 
         {/* Right Panel - Appointments List */}
         <div className="space-y-4">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Calendar className="h-5 w-5 mr-2 text-emerald-600" />
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
+              <Calendar className="mr-2 h-5 w-5 text-emerald-600" />
               {selectedProfessional ? `Turnos de ${selectedProfessional.name}` : 'Turnos del Profesional'}
             </h2>
 
             {selectedProfessional && (
-              <div className="space-y-4 mb-4">
+              <div className="mb-4 space-y-4">
                 {/* Date Range Selector */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha desde</label>
-                    <input
-                      type="date"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Fecha desde</label>
+                    <DatePicker
+                      date={dateFrom}
+                      onDateChange={(value) => setDateFrom(value)}
+                      placeholder="Selecciona una fecha"
+                      captionLayout="dropdown"
+                      fromYear={currentYear - 10}
+                      toYear={currentYear + 5}
+                      className="text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha hasta</label>
-                    <input
-                      type="date"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Fecha hasta</label>
+                    <DatePicker
+                      date={dateTo}
+                      onDateChange={(value) => setDateTo(value)}
+                      placeholder="Selecciona una fecha"
+                      captionLayout="dropdown"
+                      fromYear={currentYear - 10}
+                      toYear={currentYear + 5}
+                      className="text-sm"
                     />
                   </div>
                 </div>
                 
                 {/* Search Input */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                   <input
                     type="text"
                     placeholder="Buscar turnos por paciente, estado o notas..."
                     value={appointmentSearchTerm}
                     onChange={(e) => setAppointmentSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 pl-10 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
                 
@@ -384,11 +400,11 @@ export default function ListaTurnosPage() {
                 {(dateFrom || dateTo || appointmentSearchTerm) && (
                   <button
                     onClick={() => {
-                      setDateFrom('')
-                      setDateTo('')
+                      setDateFrom(undefined)
+                      setDateTo(undefined)
                       setAppointmentSearchTerm('')
                     }}
-                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                    className="text-sm font-medium text-emerald-600 transition hover:text-emerald-700"
                   >
                     Limpiar filtros
                   </button>
@@ -397,40 +413,40 @@ export default function ListaTurnosPage() {
             )}
 
             {!selectedProfessional ? (
-              <div className="text-center py-12 text-gray-500">
-                <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium mb-2">Selecciona un profesional</p>
+              <div className="py-12 text-center text-gray-500">
+                <Calendar className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <p className="mb-2 text-lg font-medium">Selecciona un profesional</p>
                 <p className="text-sm">Elige un profesional de la lista para ver sus turnos</p>
               </div>
             ) : loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+              <div className="py-12 text-center">
+                <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-emerald-600"></div>
                 <p className="text-sm text-gray-500">Cargando turnos...</p>
               </div>
             ) : appointments.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium mb-2">No hay turnos programados</p>
+              <div className="py-12 text-center text-gray-500">
+                <Calendar className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <p className="mb-2 text-lg font-medium">No hay turnos programados</p>
                 <p className="text-sm">
-                  {dateFrom && dateTo 
-                    ? `No hay turnos entre ${new Date(dateFrom).toLocaleDateString('es-ES')} y ${new Date(dateTo).toLocaleDateString('es-ES')}`
+                  {dateFrom && dateTo
+                    ? `No hay turnos entre ${dateFrom.toLocaleDateString('es-ES')} y ${dateTo.toLocaleDateString('es-ES')}`
                     : 'Este profesional no tiene turnos en los próximos 30 días'
                   }
                 </p>
               </div>
             ) : filteredAppointments.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium mb-2">No se encontraron turnos</p>
+              <div className="py-12 text-center text-gray-500">
+                <Calendar className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <p className="mb-2 text-lg font-medium">No se encontraron turnos</p>
                 <p className="text-sm">No hay turnos que coincidan con la búsqueda</p>
               </div>
             ) : (
-              <div className="space-y-6 max-h-96 overflow-y-auto">
+              <div className="max-h-96 space-y-6 overflow-y-auto">
                 {Object.entries(groupedAppointments)
                   .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
                   .map(([dateString, dayAppointments]) => (
                     <div key={dateString} className="space-y-2">
-                      <h3 className="text-sm font-semibold text-gray-700 border-b border-gray-200 pb-1">
+                      <h3 className="border-b border-gray-200 pb-1 text-sm font-semibold text-gray-700">
                         {new Date(dateString).toLocaleDateString('es-ES', {
                           weekday: 'long',
                           year: 'numeric',
@@ -455,24 +471,24 @@ export default function ListaTurnosPage() {
                               <button
                                 key={appointment.id}
                                 onClick={() => handleAppointmentClick(appointment)}
-                                className="w-full text-left p-3 rounded-md border border-gray-200 hover:border-emerald-200 hover:bg-emerald-50 transition-all duration-200"
+                                className="w-full rounded-md border border-gray-200 p-3 text-left transition-all duration-200 hover:border-emerald-200 hover:bg-emerald-50"
                               >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-4 flex-1">
-                                    <div className="flex items-center space-x-2">
-                                      <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                      <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                                <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                  <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                                    <div className="flex items-center gap-2">
+                                      <Clock className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                                      <span className="whitespace-nowrap text-sm font-medium text-gray-900">
                                         {startTime} - {endTime}
                                       </span>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm text-gray-700 truncate">{appointment.title}</p>
-                                    </div>
-                                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${STATUS_COLORS[appointment.status]}`}>
+                                    <p className="min-w-0 text-sm text-gray-700 sm:flex-1 sm:truncate">{appointment.title}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`inline-flex whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[appointment.status]}`}>
                                       {STATUS_LABELS[appointment.status]}
                                     </span>
+                                    <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
                                   </div>
-                                  <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-2" />
                                 </div>
                               </button>
                             )

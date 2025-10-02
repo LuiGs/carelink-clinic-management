@@ -1,14 +1,17 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ElementType } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AppointmentStatus } from '@prisma/client'
-import { Search, History as HistoryIcon, Calendar, AlertCircle, CheckCircle2, Loader2, Pill, FlaskRound, Stethoscope, BarChart3, ClipboardCheck, User } from 'lucide-react'
+import { Search, History as HistoryIcon, Calendar, AlertCircle, CheckCircle2, Loader2, Pill, FlaskRound, Stethoscope, BarChart3, ClipboardCheck, User, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { DatePicker } from '@/components/ui/date-picker'
+import { APPOINTMENT_STATUS_META, getStatusLabel } from '@/lib/appointment-status'
 
 interface PatientOption {
   id: string
@@ -17,6 +20,13 @@ interface PatientOption {
   dni: string
   fechaNacimiento: string
   genero: string
+  telefono?: string | null
+  celular?: string | null
+  email?: string | null
+  direccion?: string | null
+  ciudad?: string | null
+  provincia?: string | null
+  codigoPostal?: string | null
 }
 
 interface Diagnosis {
@@ -86,15 +96,6 @@ interface PatientMedication {
 
 type FeedbackState = { type: 'success' | 'error'; message: string } | null
 
-const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  PROGRAMADO: 'Programado',
-  CONFIRMADO: 'Confirmado',
-  EN_SALA_DE_ESPERA: 'En sala de espera',
-  COMPLETADO: 'Completado',
-  CANCELADO: 'Cancelado',
-  NO_ASISTIO: 'No asistió',
-}
-
 const DEFAULT_PAGE_SIZE = 10
 
 const formatDate = (value: string) => {
@@ -111,6 +112,9 @@ const formatDate = (value: string) => {
   }
 }
 
+const formatToInputDate = (date: Date | undefined) =>
+  date ? date.toISOString().split('T')[0] : ''
+
 export default function HistoriasClinicasContent() {
   const [searchTerm, setSearchTerm] = useState('')
   const [searching, setSearching] = useState(false)
@@ -126,9 +130,17 @@ export default function HistoriasClinicasContent() {
   const [filters, setFilters] = useState({ dateFrom: '', dateTo: '', status: '' })
   const [feedback, setFeedback] = useState<FeedbackState>(null)
 
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const initialPatientHandledRef = useRef<string | null>(null)
+
   const totalPages = Math.max(1, Math.ceil(totalAppointments / pageSize))
   const startItem = totalAppointments === 0 ? 0 : (page - 1) * pageSize + 1
   const endItem = totalAppointments === 0 ? 0 : Math.min(totalAppointments, startItem + appointments.length - 1)
+
+  const currentYear = new Date().getFullYear()
+  const dateFromValue = filters.dateFrom ? new Date(filters.dateFrom) : undefined
+  const dateToValue = filters.dateTo ? new Date(filters.dateTo) : undefined
 
   const summary = useMemo(() => {
     if (!appointments.length) {
@@ -265,17 +277,25 @@ export default function HistoriasClinicasContent() {
     }
   }
 
-  const fetchHistory = async ({
+  const setPatientQueryParam = useCallback((id: string | null) => {
+    router.replace(id ? `/profesional/historias-clinicas?patientId=${id}` : '/profesional/historias-clinicas', { scroll: false })
+  }, [router])
+
+  const fetchHistory = useCallback(async ({
     patient,
+    patientId,
     requestedFilters = filters,
     requestedPage = 1,
     context,
   }: {
-    patient: PatientOption
+    patient?: PatientOption
+    patientId?: string
     requestedFilters?: typeof filters
     requestedPage?: number
-    context?: 'search' | 'filters' | 'pagination' | 'refresh'
+    context?: 'search' | 'filters' | 'pagination' | 'refresh' | 'initial'
   }) => {
+    const id = patient?.id ?? patientId
+    if (!id) return
     try {
       setLoadingHistory(true)
       const params = new URLSearchParams()
@@ -285,13 +305,30 @@ export default function HistoriasClinicasContent() {
       params.set('limit', String(pageSize))
       params.set('page', String(requestedPage))
 
-      const response = await fetch(`/api/professional/patients/${patient.id}/history?${params.toString()}`)
+      const response = await fetch(`/api/professional/patients/${id}/history?${params.toString()}`)
       const data = await response.json()
       if (!response.ok) {
         throw new Error(data.error || 'No se pudo obtener la historia clínica')
       }
 
-      setSelectedPatient(patient)
+      const patientPayload: PatientOption = patient ?? {
+        id: data.patient.id,
+        nombre: data.patient.nombre,
+        apellido: data.patient.apellido,
+        dni: data.patient.dni,
+        fechaNacimiento: data.patient.fechaNacimiento,
+        genero: data.patient.genero,
+        telefono: data.patient.telefono,
+        celular: data.patient.celular,
+        email: data.patient.email,
+        direccion: data.patient.direccion,
+        ciudad: data.patient.ciudad,
+        provincia: data.patient.provincia,
+        codigoPostal: data.patient.codigoPostal,
+      }
+
+      setSelectedPatient(patientPayload)
+      setPatientQueryParam(patientPayload.id)
       setFilters(requestedFilters)
       setAppointments(data.appointments)
       setMedications(data.medications)
@@ -315,7 +352,23 @@ export default function HistoriasClinicasContent() {
     } finally {
       setLoadingHistory(false)
     }
-  }
+  }, [filters, pageSize, setPatientQueryParam])
+
+  useEffect(() => {
+    const patientIdParam = searchParams.get('patientId')
+
+    if (!patientIdParam) {
+      initialPatientHandledRef.current = null
+      return
+    }
+
+    if (selectedPatient?.id === patientIdParam) return
+    if (initialPatientHandledRef.current === patientIdParam) return
+
+    initialPatientHandledRef.current = patientIdParam
+    const baseFilters = { dateFrom: '', dateTo: '', status: '' }
+    fetchHistory({ patientId: patientIdParam, requestedFilters: baseFilters, requestedPage: 1, context: 'initial' })
+  }, [fetchHistory, searchParams, selectedPatient])
 
   const handleSelectPatient = (patient: PatientOption) => {
     const baseFilters = { dateFrom: '', dateTo: '', status: '' }
@@ -447,22 +500,69 @@ export default function HistoriasClinicasContent() {
               </div>
             </div>
 
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="border-sky-300 text-sky-700 hover:bg-sky-50"
+              >
+                <Link href={`/profesional/pacientes?patientId=${selectedPatient.id}`}>
+                  Ver ficha del paciente
+                </Link>
+              </Button>
+            </div>
+
             <div className="grid gap-3 md:grid-cols-4">
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 space-y-2">
                 <label className="text-xs uppercase tracking-wide text-gray-600 font-semibold">Desde</label>
-                <Input
-                  type="date"
-                  value={filters.dateFrom}
-                  onChange={(event) => handleFiltersChange({ ...filters, dateFrom: event.target.value })}
-                />
+                <div className="flex items-center gap-2">
+                  <DatePicker
+                    date={dateFromValue}
+                    onDateChange={(value) => handleFiltersChange({ ...filters, dateFrom: formatToInputDate(value) })}
+                    placeholder="Selecciona fecha inicial"
+                    captionLayout="dropdown"
+                    fromYear={1950}
+                    toYear={currentYear}
+                    className="w-full"
+                  />
+                  {filters.dateFrom && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-gray-500 hover:text-gray-700"
+                      onClick={() => handleFiltersChange({ ...filters, dateFrom: '' })}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 space-y-2">
                 <label className="text-xs uppercase tracking-wide text-gray-600 font-semibold">Hasta</label>
-                <Input
-                  type="date"
-                  value={filters.dateTo}
-                  onChange={(event) => handleFiltersChange({ ...filters, dateTo: event.target.value })}
-                />
+                <div className="flex items-center gap-2">
+                  <DatePicker
+                    date={dateToValue}
+                    onDateChange={(value) => handleFiltersChange({ ...filters, dateTo: formatToInputDate(value) })}
+                    placeholder="Selecciona fecha final"
+                    captionLayout="dropdown"
+                    fromYear={1950}
+                    toYear={currentYear}
+                    className="w-full"
+                  />
+                  {filters.dateTo && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-gray-500 hover:text-gray-700"
+                      onClick={() => handleFiltersChange({ ...filters, dateTo: '' })}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="md:col-span-2">
                 <label className="text-xs uppercase tracking-wide text-gray-600 font-semibold">Estado del turno</label>
@@ -472,8 +572,8 @@ export default function HistoriasClinicasContent() {
                   className="border rounded-md px-3 py-2 text-sm w-full"
                 >
                   <option value="">Todos</option>
-                  {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
+                  {(Object.entries(APPOINTMENT_STATUS_META) as Array<[AppointmentStatus, typeof APPOINTMENT_STATUS_META[AppointmentStatus]]>).map(([key, meta]) => (
+                    <option key={key} value={key}>{meta.label}</option>
                   ))}
                 </select>
               </div>
@@ -481,20 +581,20 @@ export default function HistoriasClinicasContent() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard icon={HistoryIcon} label="Consultas registradas" value={summary.totalAppointments} accent="bg-sky-100 text-sky-700" />
-            <SummaryCard icon={User} label="Profesionales que atendieron" value={summary.uniqueProfessionals} accent="bg-emerald-100 text-emerald-700" />
-            <SummaryCard icon={Stethoscope} label="Diagnósticos cargados" value={summary.totalDiagnoses} accent="bg-purple-100 text-purple-700" />
-            <SummaryCard icon={Pill} label="Recetas emitidas" value={summary.totalPrescriptions} accent="bg-rose-100 text-rose-700" />
-            <SummaryCard icon={FlaskRound} label="Órdenes de estudio" value={summary.totalStudies} accent="bg-orange-100 text-orange-700" />
-            <SummaryCard icon={ClipboardCheck} label="Medicaciones activas" value={summary.medicationActive} accent="bg-emerald-100 text-emerald-700" />
+            <SummaryCard icon={HistoryIcon} label="Consultas registradas" value={summary.totalAppointments} accent="bg-emerald-100 text-emerald-700" />
+            <SummaryCard icon={User} label="Profesionales que atendieron" value={summary.uniqueProfessionals} accent="bg-indigo-100 text-indigo-700" />
+            <SummaryCard icon={Stethoscope} label="Diagnósticos cargados" value={summary.totalDiagnoses} accent="bg-green-100 text-green-700" />
+            <SummaryCard icon={Pill} label="Recetas emitidas" value={summary.totalPrescriptions} accent="bg-sky-100 text-sky-700" />
+            <SummaryCard icon={FlaskRound} label="Órdenes de estudio" value={summary.totalStudies} accent="bg-purple-100 text-purple-700" />
+            <SummaryCard icon={ClipboardCheck} label="Medicaciones activas" value={summary.medicationActive} accent="bg-orange-100 text-orange-700" />
           </div>
 
           {appointments.length > 0 && (
             <div className="flex flex-wrap gap-2 text-xs">
               {Object.entries(statusSummary).map(([status, count]) => (
                 count > 0 ? (
-                  <Badge key={status} variant="outline" className="bg-gray-50">
-                    {STATUS_LABELS[status as AppointmentStatus]} • {count}
+                  <Badge key={status} className={APPOINTMENT_STATUS_META[status as AppointmentStatus].badgeClass}>
+                    {getStatusLabel(status as AppointmentStatus)} • {count}
                   </Badge>
                 ) : null
               ))}
@@ -533,8 +633,8 @@ export default function HistoriasClinicasContent() {
                           <div className="text-sm text-gray-600 mt-1">Observaciones: {appointment.observaciones}</div>
                         )}
                       </div>
-                      <span className="text-xs font-semibold text-sky-700 bg-sky-100 px-2 py-1 rounded-full">
-                        {STATUS_LABELS[appointment.estado]}
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${APPOINTMENT_STATUS_META[appointment.estado].badgeClass}`}>
+                        {getStatusLabel(appointment.estado)}
                       </span>
                     </div>
 
@@ -543,18 +643,18 @@ export default function HistoriasClinicasContent() {
                     )}
 
                     {appointment.diagnoses.length > 0 && (
-                      <div className="bg-emerald-50 rounded-lg p-4 space-y-2">
-                        <div className="flex items-center gap-2 text-emerald-700 font-semibold text-sm">
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3 text-emerald-800">
+                        <div className="flex items-center gap-2 font-semibold text-sm text-emerald-700">
                           <Stethoscope className="h-4 w-4" /> Diagnósticos
                         </div>
                         {appointment.diagnoses.map((diagnosis) => (
-                          <div key={diagnosis.id} className="text-sm text-gray-700">
-                            <div className="font-semibold text-gray-900">{diagnosis.principal}</div>
+                          <div key={diagnosis.id} className="text-sm leading-relaxed">
+                            <div className="font-semibold text-emerald-900">{diagnosis.principal}</div>
                             {diagnosis.secundarios.length > 0 && (
-                              <div className="text-gray-600">Secundarios: {diagnosis.secundarios.join('; ')}</div>
+                              <div className="text-emerald-700/80">Secundarios: {diagnosis.secundarios.join('; ')}</div>
                             )}
                             {diagnosis.notas && (
-                              <div className="text-gray-600">Notas: {diagnosis.notas}</div>
+                              <div className="text-emerald-700/80">Notas: {diagnosis.notas}</div>
                             )}
                           </div>
                         ))}
@@ -562,18 +662,18 @@ export default function HistoriasClinicasContent() {
                     )}
 
                     {appointment.prescriptions.length > 0 && (
-                      <div className="bg-sky-50 rounded-lg p-4 space-y-2">
-                        <div className="flex items-center gap-2 text-sky-700 font-semibold text-sm">
+                      <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 space-y-3 text-sky-800">
+                        <div className="flex items-center gap-2 font-semibold text-sm text-sky-700">
                           <Pill className="h-4 w-4" /> Recetas
                         </div>
                         {appointment.prescriptions.map((prescription) => (
-                          <div key={prescription.id} className="text-sm text-gray-700 space-y-1">
-                            <div className="text-xs text-gray-500">Emitida el {formatDate(prescription.createdAt)}</div>
+                          <div key={prescription.id} className="text-sm space-y-2">
+                            <div className="text-xs text-sky-600">Emitida el {formatDate(prescription.createdAt)}</div>
                             {prescription.items.map((item) => (
-                              <div key={item.id} className="bg-white border border-sky-100 rounded-md p-3">
-                                <div className="font-semibold text-gray-900">{item.medicamento}</div>
-                                <div>Dosis: {item.dosis} • Frecuencia: {item.frecuencia} • Duración: {item.duracion}</div>
-                                {item.indicaciones && <div className="text-gray-600 mt-1">{item.indicaciones}</div>}
+                              <div key={item.id} className="bg-white border border-sky-100 rounded-md p-3 space-y-1">
+                                <div className="font-semibold text-sky-900">{item.medicamento}</div>
+                                <div className="text-sky-700/80">Dosis: {item.dosis} • Frecuencia: {item.frecuencia} • Duración: {item.duracion}</div>
+                                {item.indicaciones && <div className="text-sky-700/70">{item.indicaciones}</div>}
                               </div>
                             ))}
                           </div>
@@ -582,17 +682,17 @@ export default function HistoriasClinicasContent() {
                     )}
 
                     {appointment.studyOrders.length > 0 && (
-                      <div className="bg-purple-50 rounded-lg p-4 space-y-2">
-                        <div className="flex items-center gap-2 text-purple-700 font-semibold text-sm">
+                      <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 space-y-3 text-purple-800">
+                        <div className="flex items-center gap-2 font-semibold text-sm text-purple-700">
                           <FlaskRound className="h-4 w-4" /> Estudios indicados
                         </div>
                         {appointment.studyOrders.map((order) => (
-                          <div key={order.id} className="text-sm text-gray-700 space-y-2">
-                            <div className="text-xs text-gray-500">Solicitado el {formatDate(order.createdAt)}</div>
+                          <div key={order.id} className="text-sm space-y-2">
+                            <div className="text-xs text-purple-600">Solicitado el {formatDate(order.createdAt)}</div>
                             {order.items.map((item) => (
-                              <div key={item.id} className="bg-white border border-purple-100 rounded-md p-3">
-                                <div className="font-semibold text-gray-900">{item.estudio}</div>
-                                {item.indicaciones && <div className="text-gray-600 mt-1">{item.indicaciones}</div>}
+                              <div key={item.id} className="bg-white border border-purple-100 rounded-md p-3 space-y-1">
+                                <div className="font-semibold text-purple-900">{item.estudio}</div>
+                                {item.indicaciones && <div className="text-purple-700/80">{item.indicaciones}</div>}
                               </div>
                             ))}
                           </div>
@@ -644,11 +744,11 @@ export default function HistoriasClinicasContent() {
                   No hay medicación habitual registrada
                 </div>
               ) : (
-                <div className="divide-y">
+                <div className="space-y-3 p-4">
                   {medications.map((medication) => (
-                    <div key={medication.id} className="px-6 py-4 space-y-2 text-sm text-gray-700">
+                    <div key={medication.id} className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800 space-y-1">
                       <div className="flex items-center justify-between">
-                        <div className="text-base font-semibold text-gray-900">{medication.nombre}</div>
+                        <div className="text-base font-semibold text-orange-900">{medication.nombre}</div>
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${medication.activo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
                           {medication.activo ? 'Activa' : 'Suspendida'}
                         </span>
@@ -658,7 +758,7 @@ export default function HistoriasClinicasContent() {
                       {medication.viaAdministracion && <div>Vía: {medication.viaAdministracion}</div>}
                       {medication.fechaInicio && <div>Inicio: {new Date(medication.fechaInicio).toLocaleDateString('es-AR')}</div>}
                       {medication.fechaFin && <div>Fin: {new Date(medication.fechaFin).toLocaleDateString('es-AR')}</div>}
-                      {medication.indicaciones && <div className="text-gray-600">{medication.indicaciones}</div>}
+                      {medication.indicaciones && <div>{medication.indicaciones}</div>}
                     </div>
                   ))}
                 </div>
@@ -701,7 +801,7 @@ export default function HistoriasClinicasContent() {
                   <div className="divide-y text-sm">
                     {recentStudies.map((order) => (
                       <div key={order.id} className="px-5 py-3 space-y-1">
-                        <div className="text-xs text-gray-500 flex items-center gap-2">
+                        <div className="text-xs text-purple-600 flex items-center gap-2">
                           <Calendar className="h-3 w-3" /> {formatDate(order.createdAt)}
                         </div>
                         {order.professional && (
@@ -709,10 +809,10 @@ export default function HistoriasClinicasContent() {
                             Profesional: {order.professional.apellido ? `${order.professional.apellido}, ${order.professional.name ?? ''}`.trim() : order.professional.email}
                           </div>
                         )}
-                        <ul className="text-xs text-gray-700 space-y-1">
+                        <ul className="text-xs text-purple-800 space-y-1">
                           {order.items.map((item) => (
                             <li key={item.id} className="bg-purple-50 border border-purple-100 rounded px-2 py-1">
-                              <span className="font-semibold text-purple-800">{item.estudio}</span>
+                              <span className="font-semibold text-purple-900">{item.estudio}</span>
                               {item.indicaciones && <div className="text-purple-700">{item.indicaciones}</div>}
                             </li>
                           ))}

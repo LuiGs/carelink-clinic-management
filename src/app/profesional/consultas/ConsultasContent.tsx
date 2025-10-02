@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { AppointmentStatus } from '@prisma/client'
 import { addDays, startOfDay } from 'date-fns'
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
+import { APPOINTMENT_STATUS_META, getStatusLabel } from '@/lib/appointment-status'
 
 interface Diagnosis {
   id: string
@@ -118,15 +120,6 @@ type FeedbackState = {
   type: 'success' | 'error'
   message: string
 } | null
-
-const STATUS_LABELS: Record<AppointmentStatus, { label: string; color: string }> = {
-  PROGRAMADO: { label: 'Programado', color: 'bg-blue-100 text-blue-700' },
-  CONFIRMADO: { label: 'Confirmado', color: 'bg-emerald-100 text-emerald-700' },
-  EN_SALA_DE_ESPERA: { label: 'En sala de espera', color: 'bg-amber-100 text-amber-700' },
-  COMPLETADO: { label: 'Completado', color: 'bg-emerald-100 text-emerald-700' },
-  CANCELADO: { label: 'Cancelado', color: 'bg-red-100 text-red-700' },
-  NO_ASISTIO: { label: 'No asistió', color: 'bg-slate-100 text-slate-600' },
-}
 
 const emptyDiagnosisForm = {
   principal: '',
@@ -249,6 +242,7 @@ export default function ConsultasContent() {
   const totalPages = Math.max(1, Math.ceil(totalAppointments / pageSize))
   const startItem = totalAppointments === 0 ? 0 : (page - 1) * pageSize + 1
   const endItem = totalAppointments === 0 ? 0 : Math.min(totalAppointments, startItem + appointments.length - 1)
+  const currentYear = new Date().getFullYear()
 
   const loadAppointments = async () => {
     try {
@@ -952,7 +946,7 @@ export default function ConsultasContent() {
         <div className="space-y-6">
           <form onSubmit={handleStudySubmit} className="bg-white border rounded-lg p-5 space-y-5 shadow-sm">
             <div className="flex items-center gap-2">
-              <FlaskRound className="h-5 w-5 text-purple-600" />
+              <FlaskRound className="h-5 w-5 text-orange-600" />
               <h3 className="text-lg font-semibold text-gray-900">Orden de estudios</h3>
             </div>
 
@@ -960,9 +954,9 @@ export default function ConsultasContent() {
               {studyItems.map((item, index) => {
                 const studySuggestions = filterCatalog(STUDIES_CATALOG, item.estudio)
                 return (
-                  <div key={index} className="border rounded-lg p-4 bg-purple-50/40">
+                  <div key={index} className="border rounded-lg p-4 bg-orange-50/40">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-sm font-semibold text-purple-700">Estudio #{index + 1}</span>
+                      <span className="text-sm font-semibold text-orange-700">Estudio #{index + 1}</span>
                       {studyItems.length > 1 && (
                         <button
                           type="button"
@@ -983,7 +977,7 @@ export default function ConsultasContent() {
                           idx === index ? { ...current, estudio: event.target.value } : current
                         )))}
                         placeholder="Ej. Hemograma completo"
-                        className="w-full border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                         required
                       />
                       <datalist id={`study-suggestions-${index}`}>
@@ -1000,7 +994,7 @@ export default function ConsultasContent() {
                         onChange={(event) => setStudyItems((prev) => prev.map((current, idx) => (
                           idx === index ? { ...current, indicaciones: event.target.value } : current
                         )))}
-                        className="w-full border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                         rows={2}
                         placeholder="Indicaciones para el laboratorio o el paciente"
                       />
@@ -1010,7 +1004,7 @@ export default function ConsultasContent() {
               })}
             </div>
 
-            <Button type="button" variant="outline" onClick={handleAddStudyItem} className="border-purple-300 text-purple-700">
+            <Button type="button" variant="outline" onClick={handleAddStudyItem} className="border-orange-300 text-orange-700">
               <Plus className="h-4 w-4 mr-2" /> Agregar estudio
             </Button>
 
@@ -1019,14 +1013,14 @@ export default function ConsultasContent() {
               <textarea
                 value={studyNotes}
                 onChange={(event) => setStudyNotes(event.target.value)}
-                className="w-full border rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full border rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 rows={2}
                 placeholder="Indicaciones generales, urgencia, etc."
               />
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={studyLoading} className="bg-purple-600 hover:bg-purple-700">
+              <Button type="submit" disabled={studyLoading} className="bg-orange-600 hover:bg-orange-700">
                 {studyLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1054,18 +1048,18 @@ export default function ConsultasContent() {
                   <div key={order.id} className="px-5 py-4 space-y-3">
                     <div className="flex justify-between items-start">
                       <div className="text-sm text-gray-600">Emitida el {formatDate(order.createdAt)}</div>
-                      <Badge className="bg-purple-100 text-purple-700">{order.items.length} estudio(s)</Badge>
+                      <Badge className="bg-orange-100 text-orange-700">{order.items.length} estudio(s)</Badge>
                     </div>
                     <ul className="space-y-2">
                       {order.items.map((item) => (
-                        <li key={item.id} className="bg-purple-50 rounded-md p-3 text-sm text-gray-700">
+                        <li key={item.id} className="bg-orange-50 rounded-md p-3 text-sm text-gray-700">
                           <div className="font-semibold text-gray-900">{item.estudio}</div>
                           {item.indicaciones && <div className="text-gray-600 mt-1">{item.indicaciones}</div>}
                         </li>
                       ))}
                     </ul>
                     {order.notas && (
-                      <div className="text-sm text-gray-600 bg-purple-50 rounded-md p-3">{order.notas}</div>
+                      <div className="text-sm text-gray-600 bg-orange-50 rounded-md p-3">{order.notas}</div>
                     )}
                   </div>
                 ))}
@@ -1210,7 +1204,7 @@ export default function ConsultasContent() {
             <p className="text-gray-600 text-sm">Gestiona diagnósticos, recetas, estudios y medicación de tus pacientes desde una única vista</p>
           </div>
         <div className="flex flex-wrap gap-3">
-          <div className="w-40">
+          <div className="flex items-center gap-2">
             <DatePicker
               date={filters.dateFrom}
               onDateChange={(date) => {
@@ -1218,9 +1212,27 @@ export default function ConsultasContent() {
                 setFilters((prev) => ({ ...prev, dateFrom: date ?? undefined }))
               }}
               placeholder="Desde"
+              captionLayout="dropdown"
+              fromYear={2000}
+              toYear={currentYear}
+              className="w-40"
             />
+            {filters.dateFrom && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  resetToFirstPage()
+                  setFilters((prev) => ({ ...prev, dateFrom: undefined }))
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-          <div className="w-40">
+          <div className="flex items-center gap-2">
             <DatePicker
               date={filters.dateTo}
               onDateChange={(date) => {
@@ -1228,7 +1240,25 @@ export default function ConsultasContent() {
                 setFilters((prev) => ({ ...prev, dateTo: date ?? undefined }))
               }}
               placeholder="Hasta"
+              captionLayout="dropdown"
+              fromYear={2000}
+              toYear={currentYear}
+              className="w-40"
             />
+            {filters.dateTo && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  resetToFirstPage()
+                  setFilters((prev) => ({ ...prev, dateTo: undefined }))
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
             <select
               value={filters.status}
@@ -1239,8 +1269,8 @@ export default function ConsultasContent() {
               className="border rounded-md px-3 py-2 text-sm"
             >
               <option value="">Estado: Todos</option>
-              {Object.entries(STATUS_LABELS).map(([key, value]) => (
-                <option key={key} value={key}>{value.label}</option>
+              {(Object.entries(APPOINTMENT_STATUS_META) as Array<[AppointmentStatus, typeof APPOINTMENT_STATUS_META[AppointmentStatus]]>).map(([key, meta]) => (
+                <option key={key} value={key}>{meta.label}</option>
               ))}
             </select>
             <div className="relative w-72">
@@ -1371,7 +1401,7 @@ export default function ConsultasContent() {
             ) : (
               <div className="divide-y max-h-[70vh] overflow-y-auto">
                 {appointments.map((appointment) => {
-                  const statusMeta = STATUS_LABELS[appointment.estado]
+                  const statusMeta = APPOINTMENT_STATUS_META[appointment.estado]
                   const selected = appointment.id === selectedAppointmentId
                   return (
                     <button
@@ -1393,7 +1423,7 @@ export default function ConsultasContent() {
                             </div>
                           )}
                         </div>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusMeta.color}`}>{statusMeta.label}</span>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusMeta.badgeClass}`}>{statusMeta.label}</span>
                       </div>
                       <div className="mt-2 text-xs text-slate-500 flex items-center justify-between">
                         <span>{appointment.diagnoses.length} diagnósticos</span>
@@ -1460,6 +1490,38 @@ export default function ConsultasContent() {
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-2 text-sm text-gray-500">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      >
+                        <Link href={`/profesional/agenda/consulta?id=${selectedAppointment.id}`}>
+                          Ver detalle integral
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="border-sky-300 text-sky-700 hover:bg-sky-50"
+                      >
+                        <Link href={`/profesional/pacientes?patientId=${selectedAppointment.paciente.id}`}>
+                          Ficha del paciente
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      >
+                        <Link href={`/profesional/historias-clinicas?patientId=${selectedAppointment.paciente.id}`}>
+                          Historia clínica
+                        </Link>
+                      </Button>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" /> {new Date(selectedAppointment.fecha).toLocaleDateString('es-AR')}
                     </div>
@@ -1534,7 +1596,7 @@ export default function ConsultasContent() {
             )}
             {filters.status && (
               <Badge variant="outline" className="flex items-center gap-1">
-                Estado: {STATUS_LABELS[filters.status as AppointmentStatus]?.label ?? filters.status}
+                Estado: {filters.status ? getStatusLabel(filters.status as AppointmentStatus) : filters.status}
                 <button
                   type="button"
                   onClick={() => {

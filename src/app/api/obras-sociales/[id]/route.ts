@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
-// Schema para actualización parcial
+// Schema para actualización parcial - Fixed role validation
 const updateSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio").optional(),
   codigo: z.string().trim().optional().nullable(),

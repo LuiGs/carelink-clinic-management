@@ -7,7 +7,6 @@ import {
   Users,
   BarChart3,
   Settings,
-  FileText,
   Shield,
   Building,
   ChevronLeft,
@@ -42,13 +41,6 @@ const sidebarItems = [
     icon: Users,
     href: '/gerente/usuarios',
     description: 'Gestión de usuarios del sistema',
-  },
-  {
-    id: 'reportes',
-    name: 'Reportes',
-    icon: FileText,
-    href: '/gerente/reportes',
-    description: 'Reportes ejecutivos y análisis',
   },
   {
     id: 'auditoria',

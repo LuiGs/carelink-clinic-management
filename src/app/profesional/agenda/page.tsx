@@ -85,6 +85,14 @@ function minutesSinceStartOfGrid(date: Date) {
   return date.getHours() * 60 + date.getMinutes() - startHour * 60
 }
 
+// Remove diacritics to allow accent-insensitive search
+function normalizeDiacritics(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+}
+
 export default function AgendaPage() {
   const [view, setView] = useState<View>('week')
   const [date, setDate] = useState<Date>(new Date())
@@ -233,12 +241,17 @@ export default function AgendaPage() {
     let data = appointments
     if (statusFilter.length) data = data.filter((appointment) => statusFilter.includes(appointment.status))
     if (search.trim()) {
-      const query = search.trim().toLowerCase()
+      const raw = search.trim().toLowerCase()
+      const query = normalizeDiacritics(raw)
       data = data.filter((appointment) => {
-        const titleMatch = appointment.title.toLowerCase().includes(query)
-        const notesMatch = appointment.notes?.toLowerCase().includes(query)
-        const patientMatch = appointment.patientId?.toLowerCase().includes(query)
-        return titleMatch || Boolean(notesMatch) || Boolean(patientMatch)
+        const titleNorm = normalizeDiacritics(appointment.title)
+        const notesNorm = appointment.notes ? normalizeDiacritics(appointment.notes) : ''
+        const patientNorm = appointment.patientId ? normalizeDiacritics(appointment.patientId) : ''
+        return (
+          titleNorm.includes(query) ||
+          (notesNorm && notesNorm.includes(query)) ||
+          (patientNorm && patientNorm.includes(query))
+        )
       })
     }
     return data

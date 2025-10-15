@@ -207,60 +207,62 @@ export default function ProfesionalPage() {
           </div>
         </section>
 
-        {/* Date filters section */}
-        <div className="flex justify-end">
-          
-          <div className="w-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <span>Filtrar por fecha</span>
-            </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Desde</label>
+        {/* Filtros de fecha - Diseño compacto y coherente */}
+        <div className="rounded-2xl border border-emerald-100 bg-white/70 backdrop-blur-sm p-4 shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            {/* Selectores de fecha */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-center gap-2 shrink-0">
+                <Filter className="h-4 w-4 text-emerald-600" />
+                <span className="text-sm font-medium text-gray-700">Período:</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
                 <DatePicker
                   date={dateFrom}
                   onDateChange={handleDateFromChange}
-                  placeholder="Selecciona una fecha"
+                  placeholder="Desde"
                   captionLayout="dropdown"
                   fromYear={currentYear - 10}
                   toYear={currentYear + 5}
-                  className="text-sm w-full"
+                  className="text-sm w-full sm:w-auto"
                 />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Hasta</label>
+                <span className="text-gray-400 hidden sm:inline">→</span>
                 <DatePicker
                   date={dateTo}
                   onDateChange={handleDateToChange}
-                  placeholder="Selecciona una fecha"
+                  placeholder="Hasta"
                   captionLayout="dropdown"
                   fromYear={currentYear - 10}
                   toYear={currentYear + 5}
-                  className="text-sm w-full"
+                  className="text-sm w-full sm:w-auto"
                 />
               </div>
             </div>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-              <button
-                type="button"
-                onClick={resetDateFilters}
-                className="w-full rounded-md border border-emerald-200 px-4 py-1.5 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 sm:w-auto"
-              >
-                Limpiar filtro
-              </button>
-              <button
-                type="button"
-                onClick={toggleAllTime}
-                aria-pressed={allTime}
-                className={`w-full rounded-md px-4 py-1.5 text-sm font-medium transition sm:w-auto border
-                  ${allTime
-                    ? 'bg-emerald-600 border-emerald-600 text-white shadow hover:bg-emerald-500'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'}
-                `}
-              >
-                Todos los tiempos
-              </button>
+
+            {/* Divisor: vertical en lg, horizontal en móvil */}
+            <div className="h-px lg:h-8 lg:w-px bg-gray-200 shrink-0"></div>
+
+            {/* Accesos rápidos */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <span className="text-sm text-gray-600 font-medium shrink-0">Accesos rápidos:</span>
+              <div className="flex gap-1.5 flex-wrap">
+                <button 
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200" 
+                  onClick={resetDateFilters}
+                >
+                  Últ. 30d
+                </button>
+                <button 
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors border ${
+                    allTime
+                      ? 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                  onClick={toggleAllTime}
+                >
+                  Todo
+                </button>
+              </div>
             </div>
           </div>
         </div>

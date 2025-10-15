@@ -236,19 +236,19 @@ const KpiCard = ({ title, value, subtitle, Icon, accent = "bg-blue-50" }: KpiCar
   const gradient = gradientMap[accent] || "from-gray-500 to-gray-600";
 
   return (
-    <div className="rounded-2xl border border-emerald-200 bg-white/70 backdrop-blur-sm p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+    <div className="rounded-xl border border-emerald-100 bg-white/70 backdrop-blur-sm p-3.5 shadow-sm hover:shadow-md transition-all duration-200 hover:border-emerald-200">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">{title}</p>
+          <p className="text-lg font-bold text-gray-900 truncate">{value}</p>
+          {subtitle && (
+            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{subtitle}</p>
+          )}
         </div>
-        <div className={`h-12 w-12 bg-gradient-to-br ${gradient} rounded-2xl flex items-center justify-center shadow-lg`}>
-          <Icon className="h-6 w-6 text-white" />
+        <div className={`h-9 w-9 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center shadow-sm shrink-0`}>
+          <Icon className="h-4 w-4 text-white" />
         </div>
       </div>
-      {subtitle && (
-        <p className="text-sm text-gray-500 mt-2">{subtitle}</p>
-      )}
     </div>
   );
 };
@@ -479,57 +479,89 @@ export default function GerenteDashboard() {
           </div>
         </section>
 
-        {/* Filtros */}
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
-            <div className="w-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <span>Filtrar por fecha</span>
+        {/* Filtros de fecha - Diseño compacto y coherente */}
+        <div className="rounded-2xl border border-emerald-100 bg-white/70 backdrop-blur-sm p-4 shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            {/* Selectores de fecha */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-center gap-2 shrink-0">
+                <Filter className="h-4 w-4 text-emerald-600" />
+                <span className="text-sm font-medium text-gray-700">Período:</span>
               </div>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium text-gray-700">Desde</label>
-                  <DatePicker
-                    date={dateFrom ? createLocalDate(dateFrom) : undefined}
-                    onDateChange={(date) => setDateFrom(date ? toISODateLocal(date) : '')}
-                    placeholder="Selecciona una fecha"
-                    captionLayout="dropdown"
-                    fromYear={new Date().getFullYear() - 10}
-                    toYear={new Date().getFullYear() + 5}
-                    className="text-sm w-full"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium text-gray-700">Hasta</label>
-                  <DatePicker
-                    date={dateTo ? createLocalDate(dateTo) : undefined}
-                    onDateChange={(date) => setDateTo(date ? toISODateLocal(date) : '')}
-                    placeholder="Selecciona una fecha"
-                    captionLayout="dropdown"
-                    fromYear={new Date().getFullYear() - 10}
-                    toYear={new Date().getFullYear() + 5}
-                    className="text-sm w-full"
-                  />
-                </div>
-              </div>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+              <div className="flex items-center gap-2 flex-wrap">
+                <DatePicker
+                  date={dateFrom ? createLocalDate(dateFrom) : undefined}
+                  onDateChange={(date) => setDateFrom(date ? toISODateLocal(date) : '')}
+                  placeholder="Desde"
+                  captionLayout="dropdown"
+                  fromYear={new Date().getFullYear() - 10}
+                  toYear={new Date().getFullYear() + 5}
+                  className="text-sm w-full sm:w-auto"
+                />
+                <span className="text-gray-400 hidden sm:inline">→</span>
+                <DatePicker
+                  date={dateTo ? createLocalDate(dateTo) : undefined}
+                  onDateChange={(date) => setDateTo(date ? toISODateLocal(date) : '')}
+                  placeholder="Hasta"
+                  captionLayout="dropdown"
+                  fromYear={new Date().getFullYear() - 10}
+                  toYear={new Date().getFullYear() + 5}
+                  className="text-sm w-full sm:w-auto"
+                />
               </div>
             </div>
-          </div>
 
-          {/* Accesos rápidos */}
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-            <span className="text-sm text-gray-600 mr-2 font-medium">Accesos rápidos:</span>
-            <button className="px-3 py-1.5 rounded-full border border-emerald-200 text-sm hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-emerald-700" onClick={() => applyPreset("hoy")}>Hoy</button>
-            <button className="px-3 py-1.5 rounded-full border border-emerald-200 text-sm hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-emerald-700" onClick={() => applyPreset("manana")}>Mañana</button>
-            <button className="px-3 py-1.5 rounded-full border border-emerald-200 text-sm hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-emerald-700" onClick={() => applyPreset("ultima_semana")}>Últ. semana</button>
-            <button className="px-3 py-1.5 rounded-full border border-emerald-200 text-sm hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-emerald-700" onClick={() => applyPreset("ultimo_mes")}>Últ. mes</button>
-            <button className="px-3 py-1.5 rounded-full border border-emerald-200 text-sm hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-emerald-700" onClick={() => applyPreset("ultimo_trimestre")}>Últ. trimestre</button>
-            <button className="px-3 py-1.5 rounded-full border border-emerald-200 text-sm hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-emerald-700" onClick={() => applyPreset("ultimos_90")}>Últ. 90 días</button>
-            <button className="px-3 py-1.5 rounded-full border border-emerald-200 text-sm hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-emerald-700" onClick={() => applyPreset("este_anio")}>Este año</button>
-            <button className="px-3 py-1.5 rounded-full border border-emerald-200 text-sm hover:bg-emerald-50 hover:border-emerald-300 transition-colors text-emerald-700" onClick={() => applyPreset("anio_anterior")}>Año anterior</button>
+            {/* Divisor: vertical en lg, horizontal en móvil */}
+            <div className="h-px lg:h-8 lg:w-px bg-gray-200 shrink-0"></div>
+
+            {/* Accesos rápidos */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <span className="text-sm text-gray-600 font-medium shrink-0">Accesos rápidos:</span>
+              <div className="flex gap-1.5 flex-wrap">
+                <button 
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200" 
+                  onClick={() => applyPreset("hoy")}
+                >
+                  Hoy
+                </button>
+                <button 
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200" 
+                  onClick={() => applyPreset("manana")}
+                >
+                  Mañana
+                </button>
+                <button 
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200" 
+                  onClick={() => applyPreset("ultima_semana")}
+                >
+                  Últ. 7d
+                </button>
+                <button 
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200" 
+                  onClick={() => applyPreset("ultimo_mes")}
+                >
+                  Últ. mes
+                </button>
+                <button 
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200" 
+                  onClick={() => applyPreset("ultimo_trimestre")}
+                >
+                  Últ. 3m
+                </button>
+                <button 
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200" 
+                  onClick={() => applyPreset("este_anio")}
+                >
+                  Este año
+                </button>
+                <button 
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-200" 
+                  onClick={() => applyPreset("anio_anterior")}
+                >
+                  Año ant.
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 

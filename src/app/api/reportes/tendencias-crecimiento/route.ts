@@ -2,64 +2,211 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { AppointmentStatus } from '@prisma/client';
-import { startOfMonth, subMonths, format, getHours } from 'date-fns';
+import { startOfMonth, subMonths, format, getHours, parseISO, subDays, subWeeks, subYears } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await getCurrentUser();
     if (!user || !user.roles.includes('GERENTE')) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const now = new Date();
-    const sixMonthsAgo = subMonths(now, 6);
+    // Obtener parámetros de la URL
+    const { searchParams } = new URL(request.url);
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
+    const profesionalId = searchParams.get('profesional');
+    const especialidadNombre = searchParams.get('especialidad');
+    const estado = searchParams.get('estado');
+    const periodo = searchParams.get('periodo') || 'mes';
 
-    // 1. Turnos por mes (últimos 6 meses)
-    const mesesMap = new Map<string, { total: number; completados: number; cancelados: number }>();
-    
-    for (let i = 5; i >= 0; i--) {
-      const mesDate = subMonths(now, i);
-      const mesKey = format(mesDate, 'MMM', { locale: es });
-      mesesMap.set(mesKey, { total: 0, completados: 0, cancelados: 0 });
+    // Configurar fechas basadas en parámetros o defaults
+    const now = new Date();
+    let fechaInicio: Date;
+    let fechaFin: Date;
+
+    if (dateFrom && dateTo) {
+      fechaInicio = parseISO(dateFrom);
+      fechaFin = parseISO(dateTo);
+    } else {
+      // Usar período para determinar rango de fechas
+      switch (periodo) {
+        case 'dia':
+          fechaInicio = subDays(now, 30); // Últimos 30 días
+          fechaFin = now;
+          break;
+        case 'semana':
+          fechaInicio = subWeeks(now, 12); // Últimas 12 semanas
+          fechaFin = now;
+          break;
+        case 'cuatrimestre':
+          fechaInicio = subMonths(now, 12); // Últimos 3 cuatrimestres
+          fechaFin = now;
+          break;
+        case 'año':
+          fechaInicio = subYears(now, 3); // Últimos 3 años
+          fechaFin = now;
+          break;
+        default: // mes
+          fechaInicio = subMonths(now, 6); // Últimos 6 meses
+          fechaFin = now;
+      }
     }
 
-    const turnosDetallados = await prisma.appointment.findMany({
-      where: {
-        fecha: {
-          gte: sixMonthsAgo,
+    // Construir filtros WHERE dinámicos
+    const whereFilters: {
+      fecha: { gte: Date; lte: Date };
+      profesionalId?: string;
+      profesional?: { especialidad: { nombre: string } };
+      estado?: AppointmentStatus | { in: AppointmentStatus[] };
+    } = {
+      fecha: {
+        gte: fechaInicio,
+        lte: fechaFin,
+      },
+    };
+
+    // Filtro por profesional
+    if (profesionalId && profesionalId !== 'todos') {
+      whereFilters.profesionalId = profesionalId;
+    }
+
+    // Filtro por especialidad
+    if (especialidadNombre && especialidadNombre !== 'todas') {
+      whereFilters.profesional = {
+        especialidad: {
+          nombre: especialidadNombre,
         },
-      },
-      select: {
-        fecha: true,
-        estado: true,
-      },
-    });
+      };
+    }
 
-    turnosDetallados.forEach((turno) => {
-      const mesKey = format(turno.fecha, 'MMM', { locale: es });
-      const data = mesesMap.get(mesKey);
-      if (data) {
-        data.total++;
-        if (turno.estado === AppointmentStatus.COMPLETADO) {
-          data.completados++;
-        } else if (turno.estado === AppointmentStatus.CANCELADO) {
-          data.cancelados++;
-        }
+    // Filtro por estado
+    if (estado && estado !== 'todos') {
+      switch (estado) {
+        case 'completados':
+          whereFilters.estado = AppointmentStatus.COMPLETADO;
+          break;
+        case 'cancelados':
+          whereFilters.estado = AppointmentStatus.CANCELADO;
+          break;
+        case 'pendientes':
+          whereFilters.estado = {
+            in: [AppointmentStatus.PROGRAMADO, AppointmentStatus.CONFIRMADO],
+          };
+          break;
       }
-    });
+    }
 
-    const turnosPorMesArray = Array.from(mesesMap.entries()).map(([mes, datos]) => ({
-      mes,
-      ...datos,
-    }));
+    // Función helper para generar períodos según el tipo
+    const generarPeriodos = (tipo: string, inicio: Date, fin: Date) => {
+      const periodos = [];
+      const current = new Date(inicio);
+      
+      switch (tipo) {
+        case 'dia':
+          while (current <= fin) {
+            periodos.push({
+              key: format(current, 'dd/MM', { locale: es }),
+              inicio: new Date(current),
+              fin: new Date(current.getTime() + 24 * 60 * 60 * 1000 - 1)
+            });
+            current.setDate(current.getDate() + 1);
+          }
+          break;
+        case 'semana':
+          current.setDate(current.getDate() - current.getDay() + 1); // Inicio de semana
+          while (current <= fin) {
+            const finSemana = new Date(current);
+            finSemana.setDate(finSemana.getDate() + 6);
+            periodos.push({
+              key: `Sem ${format(current, 'w', { locale: es })}`,
+              inicio: new Date(current),
+              fin: finSemana
+            });
+            current.setDate(current.getDate() + 7);
+          }
+          break;
+        case 'cuatrimestre':
+          const mesInicio = current.getMonth();
+          let cuatrimestre = Math.floor(mesInicio / 4) + 1;
+          
+          while (current.getFullYear() <= fin.getFullYear()) {
+            const inicioC = new Date(current.getFullYear(), (cuatrimestre - 1) * 4, 1);
+            const finC = new Date(current.getFullYear(), cuatrimestre * 4, 0);
+            if (inicioC <= fin) {
+              periodos.push({
+                key: `Q${cuatrimestre} ${current.getFullYear()}`,
+                inicio: inicioC,
+                fin: finC
+              });
+            }
+            cuatrimestre++;
+            if (cuatrimestre > 3) {
+              cuatrimestre = 1;
+              current.setFullYear(current.getFullYear() + 1);
+            }
+          }
+          break;
+        case 'año':
+          while (current.getFullYear() <= fin.getFullYear()) {
+            periodos.push({
+              key: current.getFullYear().toString(),
+              inicio: new Date(current.getFullYear(), 0, 1),
+              fin: new Date(current.getFullYear(), 11, 31)
+            });
+            current.setFullYear(current.getFullYear() + 1);
+          }
+          break;
+        default: // mes
+          while (current <= fin) {
+            const finMes = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+            periodos.push({
+              key: format(current, 'MMM', { locale: es }),
+              inicio: startOfMonth(current),
+              fin: finMes
+            });
+            current.setMonth(current.getMonth() + 1);
+          }
+      }
+      
+      return periodos;
+    };
 
-    // 2. Turnos por hora del día
+    // 1. Turnos por período (dinámico según filtros)
+    const periodos = generarPeriodos(periodo, fechaInicio, fechaFin);
+    const turnosPorPeriodo = [];
+
+    for (const p of periodos) {
+      const turnosEnPeriodo = await prisma.appointment.findMany({
+        where: {
+          ...whereFilters,
+          fecha: {
+            gte: p.inicio,
+            lte: p.fin,
+          },
+        },
+        select: {
+          estado: true,
+        },
+      });
+
+      const total = turnosEnPeriodo.length;
+      const completados = turnosEnPeriodo.filter(t => t.estado === AppointmentStatus.COMPLETADO).length;
+      const cancelados = turnosEnPeriodo.filter(t => t.estado === AppointmentStatus.CANCELADO).length;
+
+      turnosPorPeriodo.push({
+        mes: p.key,
+        total,
+        completados,
+        cancelados,
+      });
+    }
+
+    // 2. Turnos por hora del día (con filtros aplicados)
     const todosTurnos = await prisma.appointment.findMany({
       where: {
-        fecha: {
-          gte: subMonths(now, 3),
-        },
+        ...whereFilters,
         estado: {
           notIn: [AppointmentStatus.CANCELADO],
         },
@@ -105,46 +252,38 @@ export async function GET() {
       cantidad,
     }));
 
-    // 4. Crecimiento de pacientes
-    const pacientesMap = new Map<string, { nuevos: number; total: number }>();
+    // 4. Crecimiento de pacientes (con filtros de período)
+    const crecimientoPacientes = [];
     let acumulado = await prisma.patient.count({
       where: {
         createdAt: {
-          lt: sixMonthsAgo,
+          lt: fechaInicio,
         },
       },
     });
 
-    for (let i = 5; i >= 0; i--) {
-      const mesDate = subMonths(now, i);
-      const mesKey = format(mesDate, 'MMM', { locale: es });
-      const inicioMes = startOfMonth(mesDate);
-      const finMes = startOfMonth(subMonths(mesDate, -1));
-
+    for (const p of periodos) {
       const nuevos = await prisma.patient.count({
         where: {
           createdAt: {
-            gte: inicioMes,
-            lt: finMes,
+            gte: p.inicio,
+            lt: p.fin,
           },
         },
       });
 
       acumulado += nuevos;
-      pacientesMap.set(mesKey, { nuevos, total: acumulado });
+      crecimientoPacientes.push({
+        mes: p.key,
+        nuevos,
+        total: acumulado,
+      });
     }
 
-    const crecimientoPacientes = Array.from(pacientesMap.entries()).map(([mes, datos]) => ({
-      mes,
-      ...datos,
-    }));
-
-    // 5. Distribución por especialidades
+    // 5. Distribución por especialidades (con filtros aplicados)
     const turnosPorEspecialidad = await prisma.appointment.findMany({
       where: {
-        fecha: {
-          gte: subMonths(now, 3),
-        },
+        ...whereFilters,
         estado: {
           notIn: [AppointmentStatus.CANCELADO],
         },
@@ -180,13 +319,11 @@ export async function GET() {
       .sort((a, b) => b.cantidad - a.cantidad)
       .slice(0, 6);
 
-    // 6. Tiempo promedio por especialidad
+    // 6. Tiempo promedio por especialidad (con filtros aplicados)
     const tiemposPorEspecialidad = await prisma.appointment.groupBy({
       by: ['profesionalId'],
       where: {
-        fecha: {
-          gte: subMonths(now, 3),
-        },
+        ...whereFilters,
         estado: AppointmentStatus.COMPLETADO,
       },
       _avg: {
@@ -231,36 +368,41 @@ export async function GET() {
       .sort((a, b) => b.minutos - a.minutos)
       .slice(0, 6);
 
-    // 7. Tasa de asistencia mensual
-    const asistenciaPorMes = new Map<string, { asistencia: number; noAsistio: number }>();
+    // 7. Tasa de asistencia por período (con filtros aplicados)
+    const tasaAsistencia = [];
 
-    for (let i = 5; i >= 0; i--) {
-      const mesDate = subMonths(now, i);
-      const mesKey = format(mesDate, 'MMM', { locale: es });
-      asistenciaPorMes.set(mesKey, { asistencia: 0, noAsistio: 0 });
+    for (const p of periodos) {
+      const turnosEnPeriodo = await prisma.appointment.findMany({
+        where: {
+          ...whereFilters,
+          fecha: {
+            gte: p.inicio,
+            lte: p.fin,
+          },
+        },
+        select: {
+          estado: true,
+        },
+      });
+
+      const asistencia = turnosEnPeriodo.filter(t => 
+        t.estado === AppointmentStatus.COMPLETADO || t.estado === AppointmentStatus.CONFIRMADO
+      ).length;
+      const noAsistio = turnosEnPeriodo.filter(t => 
+        t.estado === AppointmentStatus.NO_ASISTIO
+      ).length;
+
+      tasaAsistencia.push({
+        mes: p.key,
+        asistencia,
+        noAsistio,
+      });
     }
 
-    turnosDetallados.forEach((turno) => {
-      const mesKey = format(turno.fecha, 'MMM', { locale: es });
-      const data = asistenciaPorMes.get(mesKey);
-      if (data) {
-        if (turno.estado === AppointmentStatus.COMPLETADO || turno.estado === AppointmentStatus.CONFIRMADO) {
-          data.asistencia++;
-        } else if (turno.estado === AppointmentStatus.NO_ASISTIO) {
-          data.noAsistio++;
-        }
-      }
-    });
-
-    const tasaAsistencia = Array.from(asistenciaPorMes.entries()).map(([mes, datos]) => ({
-      mes,
-      ...datos,
-    }));
-
-    // 8. Estadísticas resumen
-    const mesActual = turnosPorMesArray[turnosPorMesArray.length - 1]?.total || 0;
-    const mesAnterior = turnosPorMesArray[turnosPorMesArray.length - 2]?.total || 1;
-    const tendenciaMensual = ((mesActual - mesAnterior) / mesAnterior) * 100;
+    // 8. Estadísticas resumen (basadas en datos reales)
+    const ultimoPeriodo = turnosPorPeriodo[turnosPorPeriodo.length - 1]?.total || 0;
+    const penultimoPeriodo = turnosPorPeriodo[turnosPorPeriodo.length - 2]?.total || 1;
+    const tendenciaMensual = ((ultimoPeriodo - penultimoPeriodo) / penultimoPeriodo) * 100;
 
     const horasOrdenadas = [...turnosPorHora].sort((a, b) => b.cantidad - a.cantidad);
     const horasMasConcurridas = horasOrdenadas.slice(0, 3).map((h) => h.hora);
@@ -285,7 +427,7 @@ export async function GET() {
     const prediccionProximoMes = tendenciaMensual * 1.1; // Proyección conservadora
 
     return NextResponse.json({
-      turnosPorMes: turnosPorMesArray,
+      turnosPorMes: turnosPorPeriodo,
       turnosPorHora,
       turnosPorDia,
       crecimientoPacientes,

@@ -7,9 +7,6 @@ import {
   Bar,
   AreaChart,
   Area,
-  PieChart,
-  Pie,
-  Cell,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -109,15 +106,9 @@ interface FiltrosAvanzados {
     profesional: string | 'todos';
     especialidad: string | 'todas';
     estado: 'todos' | 'completados' | 'cancelados' | 'pendientes';
-    vistaGrafico: 'linea' | 'barras' | 'area' | 'superpuesto';
-    mostrarTendencia: boolean;
-    mostrarPromedios: boolean;
   };
   especialidades: {
-    mostrarTodos: boolean;
     especialidadesSeleccionadas: string[];
-    vistaGrafico: 'torta' | 'barras' | 'superpuesto';
-    agruparPor: 'cantidad' | 'porcentaje' | 'duracion';
     periodo: 'semana' | 'mes' | 'cuatrimestre';
   };
   profesionales: {
@@ -128,11 +119,10 @@ interface FiltrosAvanzados {
     vistaGrafico: 'barras' | 'linea' | 'ranking';
   };
   patrones: {
-    dimension: 'horario' | 'diasemana' | 'feriados' | 'estaciones';
+    dimension: 'horario' | 'diasemana';
     profesional: string | 'todos';
     especialidad: string | 'todas';
     periodo: 'mes' | 'cuatrimestre' | 'año';
-    vistaGrafico: 'heatmap' | 'barras' | 'linea';
   };
 }
 
@@ -147,7 +137,7 @@ interface DatoProfesional {
   tasaAsistencia: number;
 }
 
-const COLORS = ['#10b981', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#84cc16'];
+
 
 // Componente para métricas con animaciones
 interface MetricCardProps {
@@ -309,46 +299,6 @@ const PanelFiltrosAvanzados = ({ tipo, filtros, setFiltros, opciones }: PanelFil
                   ))}
                 </div>
               </div>
-
-              {/* Tipo de Gráfico */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Vista:</label>
-                <div className="flex flex-wrap gap-2">
-                  {(['linea', 'barras', 'area', 'superpuesto'] as const).map(vista => (
-                    <Button
-                      key={vista}
-                      variant={filtros.evolucionTemporal.vistaGrafico === vista ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => updateFiltro('evolucionTemporal', 'vistaGrafico', vista)}
-                      className="text-xs"
-                    >
-                      {vista.charAt(0).toUpperCase() + vista.slice(1)}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Opciones adicionales */}
-              <div className="flex flex-wrap gap-3">
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={filtros.evolucionTemporal.mostrarTendencia}
-                    onChange={(e) => updateFiltro('evolucionTemporal', 'mostrarTendencia', e.target.checked)}
-                    className="rounded"
-                  />
-                  Mostrar línea de tendencia
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={filtros.evolucionTemporal.mostrarPromedios}
-                    onChange={(e) => updateFiltro('evolucionTemporal', 'mostrarPromedios', e.target.checked)}
-                    className="rounded"
-                  />
-                  Mostrar promedios
-                </label>
-              </div>
             </>
           )}
 
@@ -397,59 +347,7 @@ const PanelFiltrosAvanzados = ({ tipo, filtros, setFiltros, opciones }: PanelFil
                 </div>
               </div>
 
-              {/* Agrupar por */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Agrupar por:</label>
-                <div className="flex flex-wrap gap-2">
-                  {(['cantidad', 'porcentaje', 'duracion'] as const).map(grupo => (
-                    <Button
-                      key={grupo}
-                      variant={filtros.especialidades.agruparPor === grupo ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => updateFiltro('especialidades', 'agruparPor', grupo)}
-                      className="text-xs"
-                    >
-                      {grupo === 'cantidad' ? 'Cantidad' : grupo === 'porcentaje' ? 'Porcentaje' : 'Duración'}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Período */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Período:</label>
-                <div className="flex flex-wrap gap-2">
-                  {(['semana', 'mes', 'cuatrimestre'] as const).map(periodo => (
-                    <Button
-                      key={periodo}
-                      variant={filtros.especialidades.periodo === periodo ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => updateFiltro('especialidades', 'periodo', periodo)}
-                      className="text-xs"
-                    >
-                      {periodo.charAt(0).toUpperCase() + periodo.slice(1)}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Vista */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Vista:</label>
-                <div className="flex flex-wrap gap-2">
-                  {(['torta', 'barras', 'superpuesto'] as const).map(vista => (
-                    <Button
-                      key={vista}
-                      variant={filtros.especialidades.vistaGrafico === vista ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => updateFiltro('especialidades', 'vistaGrafico', vista)}
-                      className="text-xs"
-                    >
-                      {vista.charAt(0).toUpperCase() + vista.slice(1)}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+          
             </>
           )}
 
@@ -526,7 +424,7 @@ const PanelFiltrosAvanzados = ({ tipo, filtros, setFiltros, opciones }: PanelFil
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Analizar por:</label>
                 <div className="flex flex-wrap gap-2">
-                  {(['horario', 'diasemana', 'feriados', 'estaciones'] as const).map(dim => (
+                  {(['horario', 'diasemana'] as const).map(dim => (
                     <Button
                       key={dim}
                       variant={filtros.patrones.dimension === dim ? "default" : "outline"}
@@ -534,31 +432,40 @@ const PanelFiltrosAvanzados = ({ tipo, filtros, setFiltros, opciones }: PanelFil
                       onClick={() => updateFiltro('patrones', 'dimension', dim)}
                       className="text-xs"
                     >
-                      {dim === 'horario' ? 'Horario' :
-                       dim === 'diasemana' ? 'Día Semana' :
-                       dim === 'feriados' ? 'Feriados' : 'Estaciones'}
+                      {dim === 'horario' ? 'Horario' : 'Día Semana'}
                     </Button>
                   ))}
                 </div>
               </div>
 
-              {/* Vista */}
+              {/* Profesional */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Vista:</label>
-                <div className="flex flex-wrap gap-2">
-                  {(['heatmap', 'barras', 'linea'] as const).map(vista => (
-                    <Button
-                      key={vista}
-                      variant={filtros.patrones.vistaGrafico === vista ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => updateFiltro('patrones', 'vistaGrafico', vista)}
-                      className="text-xs"
-                    >
-                      {vista === 'heatmap' ? 'Mapa de Calor' :
-                       vista.charAt(0).toUpperCase() + vista.slice(1)}
-                    </Button>
+                <label className="text-sm font-medium text-gray-700">Profesional:</label>
+                <select 
+                  value={filtros.patrones.profesional}
+                  onChange={(e) => updateFiltro('patrones', 'profesional', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="todos">Todos los profesionales</option>
+                  {opciones.profesionales?.map(prof => (
+                    <option key={prof.id} value={prof.id}>{prof.nombre} - {prof.especialidad}</option>
                   ))}
-                </div>
+                </select>
+              </div>
+
+              {/* Especialidad */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Especialidad:</label>
+                <select 
+                  value={filtros.patrones.especialidad}
+                  onChange={(e) => updateFiltro('patrones', 'especialidad', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="todas">Todas las especialidades</option>
+                  {opciones.especialidades?.map(esp => (
+                    <option key={esp} value={esp}>{esp}</option>
+                  ))}
+                </select>
               </div>
             </>
           )}
@@ -575,54 +482,25 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
   
   // Datos adicionales para filtros
   const [profesionales, setProfesionales] = useState<DatoProfesional[]>([]);
+  const [especialidades, setEspecialidades] = useState<string[]>([]);
 
-  // Lista completa de especialidades médicas disponibles
-  const especialidadesCompletas = [
-    'Cardiología',
-    'Dermatología', 
-    'Traumatología',
-    'Oftalmología',
-    'Gastroenterología',
-    'Neurología',
-    'Pediatría',
-    'Ginecología',
-    'Urología',
-    'Endocrinología',
-    'Neumología',
-    'Reumatología',
-    'Psiquiatría',
-    'Medicina General',
-    'Cirugía General',
-    'Otorrinolaringología',
-    'Hematología',
-    'Nefrología',
-    'Oncología',
-    'Anestesiología'
-  ];
-
-  // Función para obtener especialidades combinadas (API + completas)
+  // Función para obtener especialidades combinadas (API + las que vienen de la BD)
   const getEspecialidadesCombinadas = () => {
     const especialidadesDelAPI = data?.distribucionEspecialidades?.map(e => e.nombre) || [];
-    const especialidadesUnicas = new Set([...especialidadesDelAPI, ...especialidadesCompletas]);
+    const especialidadesUnicas = new Set([...especialidadesDelAPI, ...especialidades]);
     return Array.from(especialidadesUnicas).sort();
   };
 
-  // Estados de filtros avanzados - Completamente modulares
+  // Estados de filtros avanzados - Simplificados y funcionales
   const [filtros, setFiltros] = useState<FiltrosAvanzados>({
     evolucionTemporal: {
       periodo: 'mes',
       profesional: 'todos',
       especialidad: 'todas',
       estado: 'todos',
-      vistaGrafico: 'superpuesto',
-      mostrarTendencia: true,
-      mostrarPromedios: false,
     },
     especialidades: {
-      mostrarTodos: true,
       especialidadesSeleccionadas: [],
-      vistaGrafico: 'superpuesto',
-      agruparPor: 'cantidad',
       periodo: 'mes',
     },
     profesionales: {
@@ -637,23 +515,22 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
       profesional: 'todos',
       especialidad: 'todas',
       periodo: 'mes',
-      vistaGrafico: 'barras',
     },
   });
 
-  // Función para carga inicial (sin filtros específicos)
-  const fetchInitialData = useCallback(async () => {
+  // Función para carga de datos con filtros reales
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Usar filtros por defecto para la carga inicial
+      // Construir parámetros con filtros aplicados
       const params = new URLSearchParams({
         dateFrom,
         dateTo,
-        periodo: 'mes',
-        profesional: 'todos',
-        especialidad: 'todas',
-        estado: 'todos',
+        periodo: filtros.evolucionTemporal.periodo,
+        profesional: filtros.evolucionTemporal.profesional,
+        especialidad: filtros.evolucionTemporal.especialidad,
+        estado: filtros.evolucionTemporal.estado,
       });
 
       const response = await fetch(`/api/reportes/tendencias-crecimiento?${params}`);
@@ -664,56 +541,54 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
       
       const apiData = await response.json();
       setData(apiData);
-      
-      // Simular datos completos de profesionales (en producción vendría del API)
-      const profesionalesMock: DatoProfesional[] = [
-        { id: '1', nombre: 'Dr. García', especialidad: 'Cardiología', consultas: 45, pacientesUnicos: 32, duracionPromedio: 35, tasaAsistencia: 92 },
-        { id: '2', nombre: 'Dra. López', especialidad: 'Dermatología', consultas: 38, pacientesUnicos: 28, duracionPromedio: 25, tasaAsistencia: 95 },
-        { id: '3', nombre: 'Dr. Martínez', especialidad: 'Traumatología', consultas: 52, pacientesUnicos: 41, duracionPromedio: 40, tasaAsistencia: 88 },
-        { id: '4', nombre: 'Dra. Rodriguez', especialidad: 'Oftalmología', consultas: 41, pacientesUnicos: 35, duracionPromedio: 30, tasaAsistencia: 94 },
-        { id: '5', nombre: 'Dr. Fernández', especialidad: 'Gastroenterología', consultas: 33, pacientesUnicos: 25, duracionPromedio: 45, tasaAsistencia: 89 },
-        { id: '6', nombre: 'Dra. Silva', especialidad: 'Neurología', consultas: 28, pacientesUnicos: 22, duracionPromedio: 50, tasaAsistencia: 91 },
-        { id: '7', nombre: 'Dr. Vega', especialidad: 'Pediatría', consultas: 65, pacientesUnicos: 55, duracionPromedio: 25, tasaAsistencia: 96 },
-        { id: '8', nombre: 'Dra. Morales', especialidad: 'Ginecología', consultas: 48, pacientesUnicos: 38, duracionPromedio: 35, tasaAsistencia: 93 },
-        { id: '9', nombre: 'Dr. Castro', especialidad: 'Urología', consultas: 31, pacientesUnicos: 27, duracionPromedio: 40, tasaAsistencia: 87 },
-        { id: '10', nombre: 'Dra. Herrera', especialidad: 'Endocrinología', consultas: 29, pacientesUnicos: 24, duracionPromedio: 45, tasaAsistencia: 90 },
-        { id: '11', nombre: 'Dr. Jiménez', especialidad: 'Neumología', consultas: 26, pacientesUnicos: 21, duracionPromedio: 40, tasaAsistencia: 88 },
-        { id: '12', nombre: 'Dra. Ruiz', especialidad: 'Reumatología', consultas: 22, pacientesUnicos: 18, duracionPromedio: 50, tasaAsistencia: 85 },
-        { id: '13', nombre: 'Dr. Mendoza', especialidad: 'Psiquiatría', consultas: 35, pacientesUnicos: 30, duracionPromedio: 60, tasaAsistencia: 82 },
-        { id: '14', nombre: 'Dra. Torres', especialidad: 'Medicina General', consultas: 70, pacientesUnicos: 60, duracionPromedio: 20, tasaAsistencia: 97 },
-        { id: '15', nombre: 'Dr. Vargas', especialidad: 'Cirugía General', consultas: 25, pacientesUnicos: 25, duracionPromedio: 90, tasaAsistencia: 95 },
-      ];
-      setProfesionales(profesionalesMock);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, filtros.evolucionTemporal]);
 
-  useEffect(() => {
-    fetchInitialData();
-  }, [dateFrom, dateTo, fetchInitialData]);
-
-  // Inicializar especialidades seleccionadas cuando los datos se cargan por primera vez
-  useEffect(() => {
-    if (data?.distribucionEspecialidades && data.distribucionEspecialidades.length > 0 && 
-        filtros.especialidades.especialidadesSeleccionadas.length === 0) {
-      setFiltros(prev => ({
-        ...prev,
-        especialidades: {
-          ...prev.especialidades,
-          especialidadesSeleccionadas: data.distribucionEspecialidades.slice(0, 3).map((e: DistribucionEspecialidad) => e.nombre)
-        }
-      }));
+  // Función para cargar profesionales reales
+  const fetchProfesionales = useCallback(async () => {
+    try {
+      const response = await fetch('/api/profesionales/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setProfesionales(data.profesionales);
+      }
+    } catch (err) {
+      console.error('Error al cargar profesionales:', err);
     }
-  }, [data?.distribucionEspecialidades, filtros.especialidades.especialidadesSeleccionadas.length]);
+  }, []);
 
-  // Actualizar datos cuando cambien los filtros - Optimizado para no recargar API
+  // Función para cargar especialidades reales
+  const fetchEspecialidades = useCallback(async () => {
+    try {
+      const response = await fetch('/api/especialidades');
+      if (response.ok) {
+        const data = await response.json();
+        setEspecialidades(data.especialidades.map((esp: { nombre: string }) => esp.nombre));
+      }
+    } catch (err) {
+      console.error('Error al cargar especialidades:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    fetchProfesionales();
+    fetchEspecialidades();
+  }, [fetchData, fetchProfesionales, fetchEspecialidades]);
+
+  // Actualizar datos cuando cambien los filtros
+  useEffect(() => {
+    fetchData();
+  }, [filtros.evolucionTemporal, fetchData]);
+
+  // Actualizar datos cuando cambien los filtros - Conectado al backend
   const handleFiltroChange = (nuevosFiltros: FiltrosAvanzados) => {
     setFiltros(nuevosFiltros);
-    // Solo actualizar filtros locales, usar transformaciones de datos para visualizaciones
-    // No recargar datos del API para mejor performance
+    // Los datos se actualizarán automáticamente via useEffect
   };
 
   if (loading) {
@@ -746,59 +621,16 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
     estadisticasResumen 
   } = data;
 
-  // Datos filtrados para especialidades - REALMENTE filtrados por período
-  const getEspecialidadesSegunPeriodo = () => {
-    const { periodo } = filtros.especialidades;
-    
-    // Obtener especialidades del API y complementar con la lista completa
-    const especialidadesDelAPI = distribucionEspecialidades || [];
-    const todasEspecialidades = getEspecialidadesCombinadas();
-    
-    // Crear datos para todas las especialidades
-    const baseData = todasEspecialidades.map(espNombre => {
-      // Buscar datos reales del API
-      const datosReales = especialidadesDelAPI.find(esp => esp.nombre === espNombre);
-      
-      if (datosReales) {
-        return datosReales;
-      } else {
-        // Generar datos simulados para especialidades que no están en el API
-        return {
-          nombre: espNombre,
-          cantidad: Math.floor(Math.random() * 50) + 10, // Entre 10 y 60 consultas
-          porcentaje: Math.floor(Math.random() * 15) + 3, // Entre 3% y 18%
-          fill: `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)` // Color aleatorio
-        };
-      }
-    });
-    
-    if (periodo === 'semana') {
-      // Datos semanales (números más bajos)
-      return baseData.map(esp => ({
-        ...esp,
-        cantidad: Math.floor(esp.cantidad / 4), // Dividir por 4 para simular datos semanales
-        porcentaje: esp.porcentaje // Mantener porcentajes similares
-      }));
-    } else if (periodo === 'cuatrimestre') {
-      // Datos cuatrimestrales (números más altos)
-      return baseData.map(esp => ({
-        ...esp,
-        cantidad: esp.cantidad * 4, // Multiplicar por 4 para simular datos cuatrimestrales
-        porcentaje: esp.porcentaje
-      }));
-    }
-    
-    // Datos mensuales (por defecto)
-    return baseData;
-  };
-  
-  const especialidadesProcesadas = getEspecialidadesSegunPeriodo();
-  
+  // Datos reales para especialidades según filtros
   const especialidadesFiltradas = filtros.especialidades.especialidadesSeleccionadas.length > 0
-    ? especialidadesProcesadas.filter(esp => filtros.especialidades.especialidadesSeleccionadas.includes(esp.nombre))
-    : especialidadesProcesadas; // Mostrar todas las especialidades cuando no hay filtro específico
+    ? distribucionEspecialidades?.filter(esp => filtros.especialidades.especialidadesSeleccionadas.includes(esp.nombre)) || []
+    : distribucionEspecialidades || [];
 
-  // Tooltip personalizado para gráficos superpuestos
+  // Datos para gráficos (ya filtrados por el backend)
+  const datosEvolucion = turnosPorMes || [];
+  const datosPatrones = filtros.patrones.dimension === 'diasemana' ? turnosPorDia : turnosPorHora;
+
+  // Tooltip personalizado para gráficos
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ color: string; name: string; value: number; dataKey?: string }>; label?: string }) => {
     if (active && payload && payload.length) {
       return (
@@ -815,91 +647,6 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
     }
     return null;
   };
-
-  // Datos procesados según filtros - REALMENTE filtrados
-  const getDatosSegunPeriodo = () => {
-    const { periodo } = filtros.evolucionTemporal;
-    
-    // Aquí deberían venir datos diferentes según el período
-    // Por ahora simulamos la lógica hasta que la API soporte múltiples períodos
-    if (periodo === 'año') {
-      // Agrupar datos por año
-      return [{
-        mes: '2023', total: 1200, completados: 980, cancelados: 220, valor: filtros.evolucionTemporal.estado === 'completados' ? 980 : filtros.evolucionTemporal.estado === 'cancelados' ? 220 : 1200
-      }, {
-        mes: '2024', total: 1450, completados: 1180, cancelados: 270, valor: filtros.evolucionTemporal.estado === 'completados' ? 1180 : filtros.evolucionTemporal.estado === 'cancelados' ? 270 : 1450
-      }, {
-        mes: '2025', total: 1680, completados: 1380, cancelados: 300, valor: filtros.evolucionTemporal.estado === 'completados' ? 1380 : filtros.evolucionTemporal.estado === 'cancelados' ? 300 : 1680
-      }];
-    } else if (periodo === 'cuatrimestre') {
-      // Agrupar datos por cuatrimestre
-      return [{
-        mes: 'Q1 2025', total: 420, completados: 340, cancelados: 80, valor: filtros.evolucionTemporal.estado === 'completados' ? 340 : filtros.evolucionTemporal.estado === 'cancelados' ? 80 : 420
-      }, {
-        mes: 'Q2 2025', total: 480, completados: 390, cancelados: 90, valor: filtros.evolucionTemporal.estado === 'completados' ? 390 : filtros.evolucionTemporal.estado === 'cancelados' ? 90 : 480
-      }, {
-        mes: 'Q3 2025', total: 520, completados: 430, cancelados: 90, valor: filtros.evolucionTemporal.estado === 'completados' ? 430 : filtros.evolucionTemporal.estado === 'cancelados' ? 90 : 520
-      }];
-    } else if (periodo === 'semana') {
-      // Mostrar últimas semanas
-      return [{
-        mes: 'Sem 40', total: 35, completados: 28, cancelados: 7, valor: filtros.evolucionTemporal.estado === 'completados' ? 28 : filtros.evolucionTemporal.estado === 'cancelados' ? 7 : 35
-      }, {
-        mes: 'Sem 41', total: 42, completados: 36, cancelados: 6, valor: filtros.evolucionTemporal.estado === 'completados' ? 36 : filtros.evolucionTemporal.estado === 'cancelados' ? 6 : 42
-      }, {
-        mes: 'Sem 42', total: 38, completados: 31, cancelados: 7, valor: filtros.evolucionTemporal.estado === 'completados' ? 31 : filtros.evolucionTemporal.estado === 'cancelados' ? 7 : 38
-      }];
-    } else if (periodo === 'dia') {
-      // Mostrar últimos días
-      return [{
-        mes: '15/10', total: 8, completados: 6, cancelados: 2, valor: filtros.evolucionTemporal.estado === 'completados' ? 6 : filtros.evolucionTemporal.estado === 'cancelados' ? 2 : 8
-      }, {
-        mes: '16/10', total: 12, completados: 10, cancelados: 2, valor: filtros.evolucionTemporal.estado === 'completados' ? 10 : filtros.evolucionTemporal.estado === 'cancelados' ? 2 : 12
-      }, {
-        mes: '17/10', total: 9, completados: 7, cancelados: 2, valor: filtros.evolucionTemporal.estado === 'completados' ? 7 : filtros.evolucionTemporal.estado === 'cancelados' ? 2 : 9
-      }];
-    }
-    
-    // Por defecto, datos mensuales con filtros aplicados
-    return turnosPorMes.map(item => ({
-      ...item,
-      valor: filtros.evolucionTemporal.estado === 'completados' ? item.completados :
-             filtros.evolucionTemporal.estado === 'cancelados' ? item.cancelados :
-             item.total
-    }));
-  };
-  
-  const datosEvolucion = getDatosSegunPeriodo();
-
-  // Datos para patrones según dimensión seleccionada
-  const getDatosPatrones = () => {
-    const { dimension } = filtros.patrones;
-    
-    if (dimension === 'diasemana') {
-      return turnosPorDia; // Usar datos por día de la semana
-    } else if (dimension === 'feriados') {
-      // Simular datos de feriados vs días normales
-      return [
-        { hora: 'Días Normales', cantidad: 85 },
-        { hora: 'Feriados', cantidad: 15 },
-        { hora: 'Pre-Feriados', cantidad: 45 },
-        { hora: 'Post-Feriados', cantidad: 65 }
-      ];
-    } else if (dimension === 'estaciones') {
-      // Simular datos por estaciones
-      return [
-        { hora: 'Primavera', cantidad: 120 },
-        { hora: 'Verano', cantidad: 95 },
-        { hora: 'Otoño', cantidad: 135 },
-        { hora: 'Invierno', cantidad: 150 }
-      ];
-    }
-    
-    // Por defecto, horarios
-    return turnosPorHora;
-  };
-
-  const datosPatrones = getDatosPatrones();
 
   // Fórmula de proyección explicada
   const proyeccionExplicacion = `
@@ -1033,60 +780,31 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 
-                {filtros.evolucionTemporal.vistaGrafico === 'area' && (
-                  <Area
-                    type="monotone"
-                    dataKey="valor"
-                    fill="url(#gradientModular)"
-                    stroke="#10b981"
-                    strokeWidth={3}
-                    name={`${filtros.evolucionTemporal.estado.charAt(0).toUpperCase() + filtros.evolucionTemporal.estado.slice(1)}`}
-                    dot={{ fill: '#10b981', strokeWidth: 2, r: 5 }}
-                  />
-                )}
-                
-                {filtros.evolucionTemporal.vistaGrafico === 'barras' && (
-                  <Bar
-                    dataKey="valor"
-                    fill="#10b981"
-                    name={`${filtros.evolucionTemporal.estado.charAt(0).toUpperCase() + filtros.evolucionTemporal.estado.slice(1)}`}
-                    radius={[4, 4, 0, 0]}
-                  />
-                )}
-                
-                {(filtros.evolucionTemporal.vistaGrafico === 'linea' || filtros.evolucionTemporal.vistaGrafico === 'superpuesto') && (
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey="total"
-                      fill="url(#gradientModular)"
-                      stroke="#10b981"
-                      strokeWidth={3}
-                      name="Total"
-                      dot={{ fill: '#10b981', strokeWidth: 2, r: 5 }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="completados"
-                      stroke="#06b6d4"
-                      strokeWidth={2}
-                      name="Completados"
-                      dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
-                    />
-                  </>
-                )}
-                
-                {filtros.evolucionTemporal.mostrarTendencia && (
-                  <Line
-                    type="monotone"
-                    dataKey="valor"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    name="Tendencia"
-                    dot={false}
-                  />
-                )}
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  fill="url(#gradientModular)"
+                  stroke="#10b981"
+                  strokeWidth={3}
+                  name="Total"
+                  dot={{ fill: '#10b981', strokeWidth: 2, r: 5 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="completados"
+                  stroke="#06b6d4"
+                  strokeWidth={2}
+                  name="Completados"
+                  dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="cancelados"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  name="Cancelados"
+                  dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
+                />
               </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
@@ -1102,7 +820,7 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
                 <div>
                   <span className="text-lg">Análisis por Especialidad</span>
                   <p className="text-sm text-gray-600 font-normal">
-                    {filtros.especialidades.agruparPor} | {filtros.especialidades.periodo}
+                    {filtros.especialidades.periodo}
                   </p>
                 </div>
               </CardTitle>
@@ -1115,57 +833,18 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
             </CardHeader>
             <CardContent className="p-6">
               <ResponsiveContainer width="100%" height={350}>
-                {filtros.especialidades.vistaGrafico === 'torta' ? (
-                  <PieChart>
-                    <Pie
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      data={especialidadesFiltradas as any}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={120}
-                      dataKey={filtros.especialidades.agruparPor === 'cantidad' ? 'cantidad' : 'porcentaje'}
-                      nameKey="nombre"
-                    >
-                      {especialidadesFiltradas.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                  </PieChart>
-                ) : filtros.especialidades.vistaGrafico === 'barras' ? (
-                  <BarChart data={especialidadesFiltradas} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="nombre" stroke="#6b7280" angle={-45} textAnchor="end" height={80} fontSize={11} />
-                    <YAxis stroke="#6b7280" fontSize={12} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar 
-                      dataKey={filtros.especialidades.agruparPor === 'cantidad' ? 'cantidad' : 'porcentaje'} 
-                      fill="#3b82f6" 
-                      name={filtros.especialidades.agruparPor.charAt(0).toUpperCase() + filtros.especialidades.agruparPor.slice(1)} 
-                      radius={[4, 4, 0, 0]} 
-                    />
-                  </BarChart>
-                ) : (
-                  <ComposedChart data={especialidadesFiltradas} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="nombre" stroke="#6b7280" angle={-45} textAnchor="end" height={80} fontSize={11} />
-                    <YAxis yAxisId="cantidad" stroke="#6b7280" fontSize={12} />
-                    <YAxis yAxisId="porcentaje" orientation="right" stroke="#8b5cf6" fontSize={12} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Bar yAxisId="cantidad" dataKey="cantidad" fill="#3b82f6" name="Consultas" radius={[4, 4, 0, 0]} />
-                    <Line 
-                      yAxisId="porcentaje" 
-                      type="monotone" 
-                      dataKey="porcentaje" 
-                      stroke="#8b5cf6" 
-                      strokeWidth={3}
-                      name="Porcentaje (%)"
-                      dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 5 }}
-                    />
-                  </ComposedChart>
-                )}
+                <BarChart data={especialidadesFiltradas} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="nombre" stroke="#6b7280" angle={-45} textAnchor="end" height={80} fontSize={11} />
+                  <YAxis stroke="#6b7280" fontSize={12} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar 
+                    dataKey="cantidad" 
+                    fill="#3b82f6" 
+                    name="Consultas" 
+                    radius={[4, 4, 0, 0]} 
+                  />
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -1195,12 +874,6 @@ export default function TendenciasCrecimientoTab({ dateFrom, dateTo }: Tendencia
                   </p>
                 </div>
               </CardTitle>
-              <PanelFiltrosAvanzados 
-                tipo="patrones" 
-                filtros={filtros} 
-                setFiltros={handleFiltroChange}
-                opciones={{ especialidades: getEspecialidadesCombinadas(), profesionales }}
-              />
             </CardHeader>
             <CardContent className="p-4">
               <ResponsiveContainer width="100%" height={240}>

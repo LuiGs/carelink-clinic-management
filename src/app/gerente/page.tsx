@@ -47,7 +47,12 @@ interface EdadRange {
   label: string;
 }
 
-interface EdadReportData { rango: string; total: number; }
+interface EdadReportData { 
+  rango: string; 
+  totalM: number;
+  totalF: number;
+  total: number;
+}
 
 type PresetKey =
   | "hoy"
@@ -376,9 +381,10 @@ export default function GerenteDashboard() {
   const topEsp = [...especialidades].sort((a,b)=>b.total-a.total)[0];
   const topEspPct = totalConsultas ? ((topEsp?.total ?? 0)*100)/totalConsultas : 0;
   const topEdad: EdadReportData | undefined =
-  edadData.length ? [...edadData].sort((a, b) => b.total - a.total)[0] : undefined; // mantiene tu lógica original
+  edadData.length ? [...edadData].sort((a, b) => b.total - a.total)[0] : undefined;
   const topEdadPct = totalPacientes ? ((topEdad?.total ?? 0)*100)/totalPacientes : 0;
-  const top3Sum = [...especialidades].sort((a,b)=>b.total-a.total).slice(0,3).reduce((acc,it)=>acc+it.total,0);
+
+  const top3Sum = [...especialidades].sort((a, b) => b.total - a.total).slice(0, 3).reduce((acc, it) => acc + it.total, 0);
   const concTop3Pct = totalConsultas ? (top3Sum*100)/totalConsultas : 0;
 
   // Charts
@@ -392,16 +398,28 @@ export default function GerenteDashboard() {
     }],
   };
 
-  const barColors = generateColors(edadData.length);
+  // Edad: ahora con dos datasets (Hombres / Mujeres)
+  const edadLabels = edadData.map(d => d.rango);
+  const hombresColor = "#2563EB";
+  const mujeresColor = "#F43F5E";
   const edadBarChart = {
-    labels: edadData.map(d => d.rango),
-    datasets: [{
-      label: "Pacientes",
-      data: edadData.map(d => d.total),
-      backgroundColor: barColors,
-      borderColor: "#fff",
-      borderWidth: 1,
-    }],
+    labels: edadLabels,
+    datasets: [
+      {
+        label: "Hombres",
+        data: edadData.map(d => d.totalM),
+        backgroundColor: edadData.map(() => hombresColor),
+        borderColor: "#fff",
+        borderWidth: 1,
+      },
+      {
+        label: "Mujeres",
+        data: edadData.map(d => d.totalF),
+        backgroundColor: edadData.map(() => mujeresColor),
+        borderColor: "#fff",
+        borderWidth: 1,
+      },
+    ],
   };
 
   /** Agregar rango sugerido: hueco → split; se agrega al FINAL y vibra fuerte */
@@ -618,7 +636,7 @@ export default function GerenteDashboard() {
             addDisabled={addDisabled}
             onEditRangos={() => { setEditModalOpen(true); setShowAdder(false); }}
             onAgregarRango={() => { setEditModalOpen(true); setShowAdder(true); }}
-            onApplyPreset={applyPreset}
+            onApplyPreset={(preset: string) => applyPreset(preset as PresetKey)}
           />
         )}
 

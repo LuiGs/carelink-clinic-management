@@ -75,12 +75,14 @@ const RangeEditor = ({
   ranges, 
   onRangesChange, 
   onClose, 
-  title = "Editar Rangos"
+  title = "Editar Rangos",
+  maxRanges
 }: {
   ranges: Array<{ min: number; max: number }>
   onRangesChange: (ranges: Array<{ min: number; max: number }>) => void
   onClose: () => void
   title?: string
+  maxRanges?: number
 }) => {
   const [localRanges, setLocalRanges] = useState(ranges)
 
@@ -91,12 +93,16 @@ const RangeEditor = ({
   }
 
   const addRange = () => {
-    const lastMax = localRanges.length > 0 ? Math.max(...localRanges.map(r => r.max)) : 0
-    setLocalRanges([...localRanges, { min: lastMax + 1, max: lastMax + 10 }])
+    const canAdd = maxRanges ? localRanges.length < maxRanges : true
+    if (canAdd) {
+      const lastMax = localRanges.length > 0 ? Math.max(...localRanges.map(r => r.max)) : 0
+      setLocalRanges([...localRanges, { min: lastMax + 1, max: lastMax + 10 }])
+    }
   }
 
   const removeRange = (index: number) => {
-    if (localRanges.length > 1) {
+    const canRemove = maxRanges ? localRanges.length > 1 : localRanges.length > 1
+    if (canRemove) {
       setLocalRanges(localRanges.filter((_, i) => i !== index))
     }
   }
@@ -133,7 +139,7 @@ const RangeEditor = ({
                 variant="outline"
                 size="sm"
                 onClick={() => removeRange(index)}
-                disabled={localRanges.length <= 1}
+                disabled={maxRanges ? localRanges.length <= 1 : localRanges.length <= 1}
               >
                 ×
               </Button>
@@ -142,8 +148,17 @@ const RangeEditor = ({
         </div>
 
         <div className="flex gap-2 mt-4">
-          <Button variant="outline" onClick={addRange} className="flex-1">
-            <Plus className="h-4 w-4 mr-1" /> Agregar
+          <Button 
+            variant="outline" 
+            onClick={addRange} 
+            className="flex-1"
+            disabled={maxRanges ? localRanges.length >= maxRanges : false}
+          >
+            <Plus className="h-4 w-4 mr-1" /> 
+            {maxRanges && localRanges.length >= maxRanges 
+              ? `Máximo ${maxRanges} rangos` 
+              : 'Agregar'
+            }
           </Button>
         </div>
 
@@ -174,6 +189,12 @@ export default function MisPacientesTab({ professionalId, dateFrom, dateTo }: Mi
     { min: 71, max: 100 }
   ])
   
+  const [generoEdadRanges, setGeneroEdadRanges] = useState([
+    { min: 0, max: 30 },
+    { min: 31, max: 60 },
+    { min: 61, max: 100 }
+  ])
+  
   const [visitasRanges, setVisitasRanges] = useState([
     { min: 1, max: 2 },
     { min: 3, max: 5 },
@@ -184,13 +205,13 @@ export default function MisPacientesTab({ professionalId, dateFrom, dateTo }: Mi
   // Estados para filtros (cada gráfico tiene su propio filtro)
   const [generoFilterEdad, setGeneroFilterEdad] = useState<string>('todos')
   const [generoFilterVisitas, setGeneroFilterVisitas] = useState<string>('todos') 
-  const [generoFilterGeneroEdad, setGeneroFilterGeneroEdad] = useState<string>('todos')
   const [generoFilterGeografia, setGeneroFilterGeografia] = useState<string>('todos')
   const [maxCiudades, setMaxCiudades] = useState(10)
   
   // Estados para editores
   const [showEdadEditor, setShowEdadEditor] = useState(false)
   const [showVisitasEditor, setShowVisitasEditor] = useState(false)
+  const [showGeneroEdadEditor, setShowGeneroEdadEditor] = useState(false)
 
   // Función para calcular edad
   const calculateAge = (birthDate: Date): number => {
@@ -291,17 +312,15 @@ export default function MisPacientesTab({ professionalId, dateFrom, dateTo }: Mi
     frecuenciaVisitasData
   })
 
-  // Procesamiento de datos para distribución por género y edad
+  // Procesamiento de datos para distribución por edad y género (sin filtro)
   const generoEdadData: GeneroEdadData[] = []
   const generos: Array<'Masculino' | 'Femenino' | 'Otro'> = ['Masculino', 'Femenino', 'Otro']
   
   generos.forEach(genero => {
-    edadRanges.forEach(range => {
+    generoEdadRanges.forEach(range => {
       const count = pacientes.filter(p => {
-        // Aplicar filtro de género específico para género-edad
-        const pasaFiltroGenero = generoFilterGeneroEdad === 'todos' || p.genero === generoFilterGeneroEdad
         const edad = calculateAge(new Date(p.fechaNacimiento))
-        return pasaFiltroGenero && p.genero === genero && edad >= range.min && edad <= range.max
+        return p.genero === genero && edad >= range.min && edad <= range.max
       }).length
       
       if (count > 0) {
@@ -315,9 +334,9 @@ export default function MisPacientesTab({ professionalId, dateFrom, dateTo }: Mi
   })
 
   // Debug log para género y edad
-  console.log('📊 MisPacientesTab - Distribución género-edad calculada:', {
-    generoFilterGeneroEdad,
+  console.log('📊 MisPacientesTab - Distribución edad-género calculada:', {
     totalPacientes: pacientes.length,
+    generoEdadRanges,
     generoEdadData
   })
 
@@ -376,10 +395,11 @@ export default function MisPacientesTab({ professionalId, dateFrom, dateTo }: Mi
   }
 
   const generoChartData = {
-    labels: [...new Set(generoEdadData.map(d => d.rango))],
+    labels: generoEdadRanges.map(r => `${r.min}-${r.max} años`),
     datasets: generos.map((genero, index) => ({
       label: genero,
-      data: [...new Set(generoEdadData.map(d => d.rango))].map(rango => {
+      data: generoEdadRanges.map(range => {
+        const rango = `${range.min}-${range.max}`
         const item = generoEdadData.find(d => d.genero === genero && d.rango === rango)
         return item ? item.total : 0
       }),
@@ -582,30 +602,22 @@ export default function MisPacientesTab({ professionalId, dateFrom, dateTo }: Mi
 
       {/* Gráficos secundarios */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 3. Distribución por Género y Edad */}
+        {/* 3. Distribución por Edad y Género */}
         <div className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl border border-emerald-200 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Distribución Género y Edad</h2>
-              <p className="text-sm text-gray-500">Composición demográfica</p>
+              <h2 className="text-xl font-semibold text-gray-900">Distribución por Edad y Género</h2>
+              <p className="text-sm text-gray-500">Composición demográfica por rangos etarios</p>
             </div>
-            <Select value={generoFilterGeneroEdad} onValueChange={setGeneroFilterGeneroEdad}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="Masculino">Masculino</SelectItem>
-                <SelectItem value="Femenino">Femenino</SelectItem>
-                <SelectItem value="Otro">Otro</SelectItem>
-              </SelectContent>
-            </Select>
+            <Button variant="outline" size="sm" onClick={() => setShowGeneroEdadEditor(true)}>
+              <Settings className="h-4 w-4 mr-1" /> Editar rangos
+            </Button>
           </div>
           
           {generoEdadData.length > 0 ? (
             <div className="h-80">
               <Bar 
-                key={`genero-chart-${dateFrom}-${dateTo}-${generoFilterGeneroEdad}-${generoEdadData.map(d => d.total).join('-')}`}
+                key={`genero-chart-${dateFrom}-${dateTo}-${generoEdadRanges.map(r => `${r.min}-${r.max}`).join('-')}-${generoEdadData.map(d => d.total).join('-')}`}
                 data={generoChartData} 
                 options={{...chartOptions, plugins: {...chartOptions.plugins, legend: {...chartOptions.plugins.legend, position: 'bottom' as const}}}} 
               />
@@ -681,6 +693,16 @@ export default function MisPacientesTab({ professionalId, dateFrom, dateTo }: Mi
           ranges={visitasRanges}
           onRangesChange={setVisitasRanges}
           onClose={() => setShowVisitasEditor(false)}
+        />
+      )}
+
+      {showGeneroEdadEditor && (
+        <RangeEditor
+          title="Editar Rangos de Edad y Género"
+          ranges={generoEdadRanges}
+          onRangesChange={setGeneroEdadRanges}
+          onClose={() => setShowGeneroEdadEditor(false)}
+          maxRanges={3}
         />
       )}
     </Fragment>

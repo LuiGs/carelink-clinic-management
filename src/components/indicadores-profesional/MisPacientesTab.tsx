@@ -237,7 +237,7 @@ export default function MisPacientesTab({ professionalId, dateFrom, dateTo }: Mi
             dateTo,
             totalPacientes: data.pacientes?.length || 0,
             pacientes: data.pacientes,
-            generosEncontrados: [...new Set(data.pacientes?.map((p: any) => `"${p.genero}"`) || [])],
+            generosEncontrados: [...new Set(data.pacientes?.map((p: PacienteData) => `"${p.genero}"`) || [])],
             distribucionGenero: data.estadisticas?.distribucionGenero
           })
           setPacientes(data.pacientes || [])

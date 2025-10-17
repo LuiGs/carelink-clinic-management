@@ -103,6 +103,7 @@ export default function ProfesionalPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [allTime, setAllTime] = useState(false);
   const [activeTab, setActiveTab] = useState<'practice' | 'patients'>('practice');
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
   const chartRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const currentYear = new Date().getFullYear();
 
@@ -111,6 +112,23 @@ export default function ProfesionalPage() {
     const { from, to } = getDefaultDateRange();
     setDateFrom(from);
     setDateTo(to);
+  }, []);
+
+  // Get current user
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentUser(data.user);
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+    
+    fetchCurrentUser();
   }, []);
 
   const resetDateFilters = () => {
@@ -458,8 +476,12 @@ export default function ProfesionalPage() {
         )}
 
         {/* Patients tab content */}
-        {activeTab === 'patients' && (
-          <MisPacientesTab stats={stats} />
+        {activeTab === 'patients' && currentUser && (
+          <MisPacientesTab
+            professionalId={currentUser.id}
+            dateFrom={dateFrom ? toISODateLocal(dateFrom) : ''}
+            dateTo={dateTo ? toISODateLocal(dateTo) : ''}
+          />
         )}
       </div>
     </main>

@@ -8,3 +8,10 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model ObraSocial {
+  idObraSocial   Int     @id @default(autoincrement())
+  nombreObraSocial    String   @unique
+  estadoObraSocial    Boolean  @default(true)
+  fechaHoraObraSocial DateTime @default(dbgenerated("NOW() - INTERVAL '3 hours'"))
+}

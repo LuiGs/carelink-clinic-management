@@ -15,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="antialiased">
+        <header>Hola</header>
         {children}
       </body>
     </html>

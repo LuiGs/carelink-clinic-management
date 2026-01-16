@@ -1,117 +1,63 @@
-import bcrypt from 'bcryptjs'
-import { cookies } from 'next/headers'
-import { prisma } from './prisma'
-import { createSession, getSession, invalidateSession } from './session'
-import type { Role, User } from '@prisma/client'
-export type { Role }
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "./prisma";
+import bcrypt from "bcrypt";
 
-export type UserWithRoles = Pick<User, 'id' | 'email' | 'name'> & {
-  roles: Role[]
-}
+const handler = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
 
-export async function hashPassword(password: string) {
-  const salt = await bcrypt.genSalt(10)
-  return bcrypt.hash(password, salt)
-}
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        });
 
-export async function verifyPassword(password: string, hash: string) {
-  return bcrypt.compare(password, hash)
-}
+        if (!user) return null;
 
-export async function signIn(email: string, password: string): Promise<
-  | { ok: false; error: string }
-  | { ok: true; user: UserWithRoles }
-> {
-  const user = await prisma.user.findUnique({ 
-    where: { email },
-    include: {
-      roles: true
-    }
-  })
-  console.log('[AUTH] signIn lookup', { email, found: !!user })
-  if (!user) return { ok: false, error: 'Credenciales inválidas' }
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
 
-  const valid = await verifyPassword(password, user.passwordHash)
-  console.log('[AUTH] password check', { email, valid })
-  if (!valid) return { ok: false, error: 'Credenciales inválidas' }
+        if (!isValid) return null;
 
-  const session = await createSession(user.id)
-  console.log('[AUTH] session created', { userId: user.id, token: session.token, expiresAt: session.expiresAt })
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
+      },
+    }),
+  ],
+  session: {
+    strategy: "jwt",
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role as string;
+      }
+      return session;
+    },
+  },
+});
 
-  // set cookie
-  const cookieStore = await cookies()
-  cookieStore.set('session', session.token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    path: '/',
-    secure: process.env.NODE_ENV === 'production',
-    expires: session.expiresAt,
-  })
+export { handler as GET, handler as POST };
 
-  const userRoles = user.roles.map((ur: {role: Role}) => ur.role)
-  return { ok: true, user: { id: user.id, email: user.email, name: user.name, roles: userRoles } }
-}
-
-export async function signOut() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('session')?.value
-  if (token) {
-    await invalidateSession(token)
-    cookieStore.delete('session')
-  }
-}
-
-export async function getCurrentUser(): Promise<UserWithRoles | null> {
-  const session = await getSession()
-  console.log('[AUTH] getCurrentUser session', { hasSession: !!session })
-  if (!session) return null
-  const user = await prisma.user.findUnique({ 
-    where: { id: session.userId },
-    include: {
-      roles: true
-    }
-  })
-  console.log('[AUTH] getCurrentUser user', { userId: session.userId, found: !!user })
-  if (!user) return null
-  const { id, email, name } = user
-  const userRoles = user.roles.map((ur: {role: Role}) => ur.role)
-  return { id, email, name, roles: userRoles }
-}
-
-export function roleToPath(role: Role) {
-  switch (role) {
-    case 'PROFESIONAL':
-      return '/profesional'
-    case 'MESA_ENTRADA':
-      return '/mesa-entrada'
-    case 'GERENTE':
-      return '/gerente'
-  }
-}
-
-export function getDefaultPath(roles: Role[]): string {
-  // If user has multiple roles, go to home page to choose
-  if (roles.length > 1) {
-    return '/'
-  }
-  
-  // Single role: redirect directly to the section
-  if (roles.includes('GERENTE')) {
-    return '/gerente'
-  }
-  if (roles.includes('PROFESIONAL')) {
-    return '/profesional'
-  }
-  if (roles.includes('MESA_ENTRADA')) {
-    return '/mesa-entrada'
-  }
-  return '/error'
-}
-
-export function userHasRole(userRoles: Role[], requiredRole: Role): boolean {
-  return userRoles.includes(requiredRole)
-}
-
-export function userHasAnyRole(userRoles: Role[], requiredRoles: Role[]): boolean {
-  return requiredRoles.some(role => userRoles.includes(role))
-}
+// Export auth for use in pages/API routes and middleware
+export const auth = handler.auth;

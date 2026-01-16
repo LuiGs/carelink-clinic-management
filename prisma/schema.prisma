@@ -1,4 +1,5 @@
 // prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,13 +9,114 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Modelo básico de ejemplo
+model Paciente {
+  idPaciente        Int      @id @default(autoincrement())
+  nombrePaciente    String
+  apellidoPaciente  String
+  telefonoPaciente  String?
+  domicilioPaciente String?
+  dniPaciente       String   @unique
+  fechaHoraPaciente DateTime @default(now())
+  estadoPaciente    Boolean  @default(true)
+
+  // Relaciones
+  consultas         Consultas[]
+  pacienteXObra     PacienteXObra[]
+}
+
+model ObraSocial {
+  idObraSocial        Int      @id @default(autoincrement())
+  nombreObraSocial    String   @unique
+  estadoObraSocial    Boolean  @default(true)
+  fechaHoraObraSocial DateTime @default(now())
+
+  // Relaciones
+  consultas     Consultas[]
+  pacienteXObra PacienteXObra[]
+}
+
+model Consultas {
+  idConsulta          Int      @id @default(autoincrement())
+  motivoConsulta      String
+  diagnosticoConsulta String?
+  tratamientoConsulta String?
+  fechaHoraConsulta   DateTime @default(now())
+
+  // FK
+  idPaciente    Int
+  idObraSocial  Int
+
+  // Relaciones (1 consulta pertenece a 1 paciente y 1 obra social)
+  paciente    Paciente   @relation(fields: [idPaciente], references: [idPaciente], onDelete: Restrict)
+  obraSocial  ObraSocial @relation(fields: [idObraSocial], references: [idObraSocial], onDelete: Restrict)
+
+  @@index([idPaciente])
+  @@index([idObraSocial])
+}
+
+model PacienteXObra {
+  idPacientexObra Int @id @default(autoincrement())
+
+  // FK
+  idPaciente   Int
+  idObraSocial Int
+
+  // Relaciones
+  paciente    Paciente   @relation(fields: [idPaciente], references: [idPaciente], onDelete: Cascade)
+  obraSocial  ObraSocial @relation(fields: [idObraSocial], references: [idObraSocial], onDelete: Cascade)
+
+  // Evita duplicados (un mismo paciente no se repite con la misma obra social)
+  @@unique([idPaciente, idObraSocial])
+  @@index([idObraSocial])
+}
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
+  password  String
   name      String?
+  role      String   @default("USER")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("users")
+  accounts  Account[]
+  sessions  Session[]
+}
+
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }

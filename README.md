@@ -1,6 +1,11 @@
-# CareLink
+# 🏥 DermaCor - Sistema de Gestión de Pacientes
 
-Sistema de gestión de salud y cuidado desarrollado con Next.js, TypeScript, Tailwind CSS, Prisma y PostgreSQL.
+Sistema para la gestión integral de pacientes en el centro dermatologico, desarrollado por un equipo de 4 personas.
+
+## 📋 Descripción del Proyecto
+
+Dermacor es una aplicación web moderna que permite:
+- **Gestión de Pacientes**: Registro, historial y datos médicos.
 
 ## 🚀 Tecnologías
 
@@ -22,12 +27,12 @@ Sistema de gestión de salud y cuidado desarrollado con Next.js, TypeScript, Tai
 1. Clona el repositorio:
 ```bash
 git clone <url-del-repositorio>
-cd carelink
+cd Dermacor-
 ```
 
 2. Instala las dependencias:
 ```bash
-npm install
+npm i
 ```
 
 3. Configura las variables de entorno:
@@ -59,6 +64,8 @@ npm run dev
 
 La aplicación estará disponible en `http://localhost:3000`.
 
+
+
 ## 📁 Scripts disponibles
 
 - `npm run dev` - Inicia el servidor de desarrollo
@@ -86,15 +93,9 @@ carelink/
 ├── public/                  # Archivos estáticos
 └── docker-compose.yml       # Configuración de Docker
 ```
+## Licencia y Derechos de Uso
 
-## 🤝 Contribuir
+**Copyright © 2026 Centro Dermatologico. Todos los derechos reservados.**
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -m 'Agrega nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT.
+Este software es propiedad exclusiva de Centro Dermatologico.
+Queda prohibida su distribución, copia, modificación o uso por terceros sin autorización expresa y por escrito del titular..

@@ -100,13 +100,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-white py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-xs sm:max-w-sm space-y-6 sm:space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-cyan-900">
+          <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-extrabold text-cyan-900">
             Crear cuenta
           </h2>
-          <p className="mt-2 text-center text-sm text-cyan-700">
+          <p className="mt-2 text-center text-xs sm:text-sm text-cyan-700">
             O{' '}
             <Link
               href="/auth/login"
@@ -117,12 +117,12 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 sm:mt-8 space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-50 p-4 border border-red-200">
+            <div className="rounded-md bg-red-50 p-3 sm:p-4 border border-red-200">
               <div className="flex">
-                <div className="ml-3">
-                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                <div className="ml-2 sm:ml-3">
+                  <p className="text-xs sm:text-sm text-red-700 font-medium">{error}</p>
                 </div>
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function RegisterPage() {
                 placeholder="Nombre completo (opcional)"
                 value={formData.name}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-cyan-300 placeholder-cyan-400 text-gray-900 rounded-t-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 sm:px-4 py-2 sm:py-3 border border-cyan-300 placeholder-cyan-400 text-gray-900 rounded-t-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 text-sm sm:text-base"
               />
             </div>
             <div>
@@ -157,7 +157,7 @@ export default function RegisterPage() {
                 placeholder="Correo electrónico"
                 value={formData.email}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-cyan-300 placeholder-cyan-400 text-gray-900 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 sm:px-4 py-2 sm:py-3 border border-cyan-300 placeholder-cyan-400 text-gray-900 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 text-sm sm:text-base"
               />
             </div>
             <div>
@@ -173,7 +173,7 @@ export default function RegisterPage() {
                 placeholder="Contraseña"
                 value={formData.password}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-cyan-300 placeholder-cyan-400 text-gray-900 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 sm:px-4 py-2 sm:py-3 border border-cyan-300 placeholder-cyan-400 text-gray-900 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 text-sm sm:text-base"
               />
             </div>
             <div>
@@ -189,7 +189,7 @@ export default function RegisterPage() {
                 placeholder="Confirmar contraseña"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-cyan-300 placeholder-cyan-400 text-gray-900 rounded-b-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 sm:px-4 py-2 sm:py-3 border border-cyan-300 placeholder-cyan-400 text-gray-900 rounded-b-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 text-sm sm:text-base"
               />
             </div>
           </div>
@@ -198,7 +198,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group relative w-full flex justify-center py-2 sm:py-3 px-4 border border-transparent text-sm sm:text-base font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Registrando...' : 'Registrarse'}
             </button>

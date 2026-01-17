@@ -55,6 +55,7 @@ model Consultas {
 
   @@index([idPaciente])
   @@index([idObraSocial])
+  @@index([idPaciente, fechaHoraConsulta])
 }
 
 model Account {

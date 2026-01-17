@@ -29,20 +29,13 @@ CREATE TABLE "Consultas" (
     "diagnosticoConsulta" TEXT,
     "tratamientoConsulta" TEXT,
     "fechaHoraConsulta" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "nroAfiliado" TEXT,
+    "tipoConsulta" TEXT,
+    "montoConsulta" DOUBLE PRECISION,
     "idPaciente" INTEGER NOT NULL,
     "idObraSocial" INTEGER NOT NULL,
 
     CONSTRAINT "Consultas_pkey" PRIMARY KEY ("idConsulta")
-);
-
--- CreateTable
-CREATE TABLE "PacienteXObra" (
-    "idPacientexObra" SERIAL NOT NULL,
-    "nroAfiliado" TEXT,
-    "idPaciente" INTEGER NOT NULL,
-    "idObraSocial" INTEGER NOT NULL,
-
-    CONSTRAINT "PacienteXObra_pkey" PRIMARY KEY ("idPacientexObra")
 );
 
 -- CreateTable
@@ -106,10 +99,7 @@ CREATE INDEX "Consultas_idPaciente_idx" ON "Consultas"("idPaciente");
 CREATE INDEX "Consultas_idObraSocial_idx" ON "Consultas"("idObraSocial");
 
 -- CreateIndex
-CREATE INDEX "PacienteXObra_idObraSocial_idx" ON "PacienteXObra"("idObraSocial");
-
--- CreateIndex
-CREATE UNIQUE INDEX "PacienteXObra_idPaciente_idObraSocial_key" ON "PacienteXObra"("idPaciente", "idObraSocial");
+CREATE INDEX "Consultas_idPaciente_fechaHoraConsulta_idx" ON "Consultas"("idPaciente", "fechaHoraConsulta");
 
 -- CreateIndex
 CREATE INDEX "Account_userId_idx" ON "Account"("userId");
@@ -137,12 +127,6 @@ ALTER TABLE "Consultas" ADD CONSTRAINT "Consultas_idPaciente_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "Consultas" ADD CONSTRAINT "Consultas_idObraSocial_fkey" FOREIGN KEY ("idObraSocial") REFERENCES "ObraSocial"("idObraSocial") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PacienteXObra" ADD CONSTRAINT "PacienteXObra_idPaciente_fkey" FOREIGN KEY ("idPaciente") REFERENCES "Paciente"("idPaciente") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "PacienteXObra" ADD CONSTRAINT "PacienteXObra_idObraSocial_fkey" FOREIGN KEY ("idObraSocial") REFERENCES "ObraSocial"("idObraSocial") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

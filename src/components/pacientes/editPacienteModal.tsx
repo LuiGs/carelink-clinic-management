@@ -160,7 +160,7 @@ export default function EditPacienteModal({ open, onOpenChange, paciente, onSave
             type="submit"
             form="edit-paciente-form"
             disabled={isLoading}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white min-w-[110px]"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white"
           >
             {isLoading ? (
               <>

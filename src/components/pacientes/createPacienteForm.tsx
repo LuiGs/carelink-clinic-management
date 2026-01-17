@@ -1,14 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
-import ObraSocialComboBox, { ObraSocialOption } from "@/components/pacientes/obraSocialComboBox";
 
-import { useObraSocial } from "@/hooks/useObras";
 import { FieldGroup, FieldSet } from "@/components/ui/field";
-import CreateModalObraSocialComponent from "./newObraSocialPacient";
 
 type InputsCreatePaciente = {
   nombrePaciente: string;
@@ -29,20 +25,6 @@ export default function CreatePacienteForm({
   dniServerError,
   onClearDniServerError,
 }: CreatePacienteFormProps) {
-  const { obras, loading, error, refrescar } = useObraSocial();
-
-  const obraOptions: ObraSocialOption[] = useMemo(
-    () =>
-      obras.map((o) => ({
-        id: o.idObraSocial,
-        nombre: o.nombreObraSocial,
-      })),
-    [obras]
-  );
-
-  const [lastCreatedObraName, setLastCreatedObraName] = useState<string | null>(null);
-  const [obraSelected, setObraSelected] = useState<ObraSocialOption | null>(null);
-  const [openNuevaOS, setOpenNuevaOS] = useState(false);
 
   const {
     register,
@@ -63,11 +45,9 @@ export default function CreatePacienteForm({
     try {
       await onSubmitPaciente?.({
         ...data,
-        idObraSocial: obraSelected?.id ?? null,
       });
 
       reset();
-      setObraSelected(null);
     } catch {
       // El error se maneja desde el padre anasheeee
     }
@@ -149,53 +129,9 @@ export default function CreatePacienteForm({
               )}
             </div>
 
-            {/* Obra social */}
-            <div className="space-y-2">
-              <ObraSocialComboBox
-                options={obraOptions}
-                value={obraSelected}
-                onChange={setObraSelected}
-                disabled={loading || !!error}
-                onCreateNew={() => setOpenNuevaOS(true)}
-              />
-
-              {error && <p className="text-sm text-red-500">{error}</p>}
-            </div>
           </FieldGroup>
         </FieldSet>
       </form>
-
-      {/* Modal para crear obra social */}
-      <CreateModalObraSocialComponent
-        open={openNuevaOS}
-        onOpenChange={setOpenNuevaOS}
-        hideTrigger
-        onCreatedNombre={(nombre) => setLastCreatedObraName(nombre)}
-        onSuccess={async () => {
-          await refrescar();
-
-          if (lastCreatedObraName) {
-            const res = await fetch("/api/obras-sociales");
-            const data = await res.json();
-
-            if (!data?.error && Array.isArray(data)) {
-              const match = data.find(
-                (o: unknown) =>
-                  String((o as Record<string, unknown>)?.nombreObraSocial ?? "").toLowerCase() === lastCreatedObraName.toLowerCase()
-              );
-
-              if (match) {
-                setObraSelected({
-                  id: Number((match as Record<string, unknown>).idObraSocial),
-                  nombre: String((match as Record<string, unknown>).nombreObraSocial),
-                });
-              }
-            }
-
-            setLastCreatedObraName(null);
-          }
-        }}
-      />
     </>
   );
 }

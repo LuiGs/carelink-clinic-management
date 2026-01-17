@@ -27,14 +27,12 @@ export function usePacientesQuery(q: string, pageSize: number = 12) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ paginación
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
   const qDebounced = useDebouncedValue(q.trim(), 350);
 
-  // ✅ cuando cambia la búsqueda, volvemos a la página 1
   useEffect(() => {
     setPage(1);
   }, [qDebounced]);
@@ -58,13 +56,11 @@ export function usePacientesQuery(q: string, pageSize: number = 12) {
 
       if ((data as Record<string, unknown>)?.error) throw new Error((data as Record<string, unknown>).error as string);
 
-      // ✅ la API ahora devuelve { items, total, totalPages, ... }
       setPacientes(Array.isArray(data.items) ? data.items : []);
       setTotal(typeof data.total === "number" ? data.total : 0);
       setTotalPages(typeof data.totalPages === "number" ? data.totalPages : 1);
       setError(null);
 
-      // ✅ si el usuario quedó en una página inexistente (por filtros), corregimos
       if (typeof data.totalPages === "number" && data.totalPages >= 1 && page > data.totalPages) {
         setPage(data.totalPages);
       }
@@ -77,7 +73,6 @@ export function usePacientesQuery(q: string, pageSize: number = 12) {
 
   useEffect(() => {
     refrescar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
   return {
@@ -86,7 +81,6 @@ export function usePacientesQuery(q: string, pageSize: number = 12) {
     error,
     refrescar,
 
-    // ✅ paginación
     page,
     setPage,
     pageSize,

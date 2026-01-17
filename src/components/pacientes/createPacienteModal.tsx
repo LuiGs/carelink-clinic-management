@@ -59,7 +59,6 @@ export default function CreatePacienteModal({ onCreated }: Props) {
                   dniPaciente: data.dniPaciente,
                   telefonoPaciente: data.telefonoPaciente || null,
                   domicilioPaciente: data.domicilioPaciente || null,
-                  idObraSocial: data.idObraSocial ?? null,
                 });
 
                 onCreated?.();
@@ -98,7 +97,7 @@ export default function CreatePacienteModal({ onCreated }: Props) {
               type="submit"
               form="create-paciente-form"
               disabled={isLoading}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white min-w-[110px]"
+              className="bg-cyan-600 hover:bg-cyan-700 text-white"
             >
               {isLoading ? (
                 <>

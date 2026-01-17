@@ -1,15 +1,12 @@
 import type { Paciente } from "@/types/paciente";
 
 export type PacienteConObras = Paciente & {
-  pacienteXObra: Array<{
+  consultas: Array<{
+    fechaHoraConsulta: string;
     obraSocial: {
       idObraSocial: number;
       nombreObraSocial: string;
       estadoObraSocial: boolean;
-    };
-  }>;
-
-  consultas: Array<{
-    fechaHoraConsulta: string;
+    } | null;
   }>;
 };

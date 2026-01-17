@@ -56,25 +56,22 @@ export default function PacienteCard({
     telefonoPaciente,
     domicilioPaciente,
     estadoPaciente,
-    pacienteXObra,
+    consultas,
   } = paciente;
 
   const [openEdit, setOpenEdit] = useState(false);
   const [openConfirmEstado, setOpenConfirmEstado] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
-  const obras = (pacienteXObra ?? [])
-    .map((x) => x.obraSocial?.nombreObraSocial)
-    .filter(Boolean) as string[];
+  // ✅ Obra social actual = obra social de la última consulta
+  const ultimaConsulta = consultas?.[0];
+  const obraSocialActual =
+    ultimaConsulta?.obraSocial?.nombreObraSocial ?? null;
 
-  const obraPrincipal = obras[0];
-  const obrasExtra = obras.length > 1 ? obras.length - 1 : 0;
+  const ultimaConsultaIso = ultimaConsulta?.fechaHoraConsulta ?? null;
 
   const labelEstadoAction = estadoPaciente ? "Dar de baja" : "Dar de alta";
   const nextEstado = !estadoPaciente;
-
-  // ✅ última consulta real (viene del backend: take 1)
-  const ultimaConsultaIso = paciente.consultas?.[0]?.fechaHoraConsulta;
 
   return (
     <>
@@ -86,11 +83,12 @@ export default function PacienteCard({
               <h3 className="text-lg font-semibold text-foreground">
                 {nombrePaciente} {apellidoPaciente}
               </h3>
-              <p className="text-sm text-muted-foreground">DNI: {dniPaciente}</p>
+              <p className="text-sm text-muted-foreground">
+                DNI: {dniPaciente}
+              </p>
             </div>
 
             <div className="flex flex-col items-end gap-2">
-              {/* ... menu arriba del badge */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -118,7 +116,6 @@ export default function PacienteCard({
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Badge */}
               <Badge
                 variant={estadoPaciente ? "default" : "secondary"}
                 className={
@@ -137,13 +134,14 @@ export default function PacienteCard({
             {/* Obra social */}
             <div className="flex items-center gap-3">
               <CreditCard className="h-4 w-4 text-muted-foreground" />
-              {obraPrincipal ? (
+              {obraSocialActual ? (
                 <Badge variant="secondary" className="font-medium">
-                  {obraPrincipal}
-                  {obrasExtra > 0 ? ` +${obrasExtra}` : ""}
+                  {obraSocialActual}
                 </Badge>
               ) : (
-                <span className="text-muted-foreground">Sin obra social</span>
+                <span className="text-muted-foreground">
+                  Sin obra social
+                </span>
               )}
             </div>
 
@@ -151,7 +149,7 @@ export default function PacienteCard({
             <div className="flex items-center gap-3">
               <Phone className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">
-                {telefonoPaciente ? telefonoPaciente : "Sin teléfono"}
+                {telefonoPaciente ?? "Sin teléfono"}
               </span>
             </div>
 
@@ -159,20 +157,19 @@ export default function PacienteCard({
             <div className="flex items-center gap-3">
               <MapPin className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">
-                {domicilioPaciente ? domicilioPaciente : "Sin domicilio"}
+                {domicilioPaciente ?? "Sin domicilio"}
               </span>
             </div>
           </div>
 
           <Separator className="my-5" />
 
-          {/* ✅ Última consulta (real) */}
+          {/* Última consulta */}
           <p className="text-xs text-muted-foreground">
             Última consulta:{" "}
             {ultimaConsultaIso ? formatFechaAR(ultimaConsultaIso) : "—"}
           </p>
 
-          {/* CTA */}
           <Button
             className="mt-3 w-full rounded-lg bg-cyan-400 hover:bg-cyan-500"
             onClick={() => onVerHistoria?.(idPaciente)}
@@ -191,7 +188,10 @@ export default function PacienteCard({
       />
 
       {/* Confirm alta/baja */}
-      <AlertDialog open={openConfirmEstado} onOpenChange={setOpenConfirmEstado}>
+      <AlertDialog
+        open={openConfirmEstado}
+        onOpenChange={setOpenConfirmEstado}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{labelEstadoAction}</AlertDialogTitle>

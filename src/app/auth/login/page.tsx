@@ -4,32 +4,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-
-// El componente de la derecha para decoracion <3
-const WavePattern = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    <svg
-      className="absolute w-[200%] h-[200%] top-[-50%] left-[-50%] animate-[spin_60s_linear_infinite] opacity-20"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-    >
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.5"
-        d="M50 50 m-40 0 a 40 40 0 1 0 80 0 a 40 40 0 1 0 -80 0 M50 50 m-30 0 a 30 30 0 1 0 60 0 a 30 30 0 1 0 -60 0 M50 50 m-20 0 a 20 20 0 1 0 40 0 a 20 20 0 1 0 -40 0"
-        className="text-cyan-200"
-      />
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.3"
-        d="M50 50 m-45 0 a 45 45 0 1 0 90 0 a 45 45 0 1 0 -90 0 M50 50 m-35 0 a 35 35 0 1 0 70 0 a 35 35 0 1 0 -70 0"
-        className="text-white"
-      />
-    </svg>
-  </div>
-);
+import InteractiveBackground from "@/components/auth/InteractiveBackground";
 
 function LoginContent() {
   const router = useRouter();
@@ -41,6 +16,7 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
 
+  // ... (useEffects se mantienen igual)
   useEffect(() => {
     if (status === "authenticated" && session) {
       router.push("/obras-sociales");
@@ -88,21 +64,38 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen flex w-full bg-white overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row relative overflow-hidden">
       
-      {/* Left side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-20 py-12 relative z-10">
-        <div className="w-full max-w-sm mx-auto animate-[fadeIn_0.5s_ease-out]">
-          
-          {/* Logo Brand (Opcional) */}
-          <div className="mb-10 flex items-center gap-2">
-            <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold">D</div>
-            <span className="text-xl font-bold text-gray-800 tracking-tight">Dermacor</span>
-          </div>
+      {/* 1. AREA DEL FONDO INTERACTIVO 
+          Móvil: Absolute inset-0 (Fondo total detrás de todo)
+          Desktop (lg): Static width-1/2 (Columna derecha sólida)
+      */}
+      <div className="absolute inset-0 z-0 lg:static lg:w-1/2 lg:order-2 lg:h-screen bg-cyan-950">
+        <InteractiveBackground />
+      </div>
 
-          {/* Heading */}
-          <div className="mb-8">
-            <h2 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">
+      {/* 2. AREA DEL FORMULARIO
+          Móvil: Relative z-10 (Encima del fondo)
+          Desktop (lg): Static width-1/2 (Columna izquierda sólida)
+      */}
+      <div className="w-full relative z-10 flex items-center justify-center min-h-screen lg:min-h-0 lg:w-1/2 lg:order-1 lg:bg-white">
+        
+        {/* CONTENEDOR DE LA TARJETA
+            Móvil: Tiene fondo blanco translúcido, bordes redondeados y sombra (look tarjeta flotante).
+            Desktop (lg): Se quitan los bordes, sombras y fondo para que se vea limpio sobre el blanco.
+        */}
+        <div className="w-full max-w-[420px] px-6 py-8 mx-4 
+                        bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20
+                        lg:bg-transparent lg:shadow-none lg:rounded-none lg:border-none lg:p-0 lg:mx-0 lg:max-w-md animate-[fadeIn_0.5s_ease-out]">
+          
+          {/* Header */}
+          <div className="mb-8 lg:mb-10">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">D</div>
+              <span className="text-2xl font-bold text-gray-800 tracking-tight">Dermacor</span>
+            </div>
+
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">
               Bienvenido de nuevo
             </h2>
             <p className="text-gray-500">
@@ -110,7 +103,7 @@ function LoginContent() {
             </p>
           </div>
 
-          {/* Alerts */}
+          {/* Alertas */}
           {registered && (
             <div className="mb-6 rounded-xl bg-cyan-50 p-4 border border-cyan-100 flex items-center gap-3 animate-[slideIn_0.3s_ease-out]">
               <div className="w-2 h-2 rounded-full bg-cyan-500" />
@@ -126,7 +119,7 @@ function LoginContent() {
             </div>
           )}
 
-          {/* Form */}
+          {/* Formulario */}
           <form className="space-y-5" onSubmit={onSubmit}>
             <div className="group">
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">
@@ -148,6 +141,9 @@ function LoginContent() {
                 <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
                   Contraseña
                 </label>
+                <a href="#" className="text-xs font-medium text-cyan-600 hover:text-cyan-700 hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </a>
               </div>
               <input
                 id="password"
@@ -165,19 +161,10 @@ function LoginContent() {
               disabled={loading}
               className="w-full py-4 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 active:scale-[0.99] text-white font-bold text-lg shadow-lg shadow-cyan-500/30 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none mt-2"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Procesando...
-                </span>
-              ) : "Iniciar Sesión"}
+              {loading ? "Procesando..." : "Iniciar Sesión"}
             </button>
           </form>
 
-          {/* Footer Link */}
           <div className="mt-8 text-center">
             <p className="text-gray-500 text-sm">
               ¿Aún no tienes cuenta?{' '}
@@ -189,32 +176,6 @@ function LoginContent() {
               </Link>
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* Right side - The "Himalayas" inspired background */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-cyan-950 items-center justify-center overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 via-cyan-700 to-cyan-900 opacity-90 z-0"></div>
-        <WavePattern />
-        
-        {/* Glass Effect Overlay Blob */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-400/20 rounded-full blur-[100px] animate-pulse"></div>
-
-        {/* Content */}
-        <div className="relative z-10 max-w-lg text-center px-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 mb-8 shadow-2xl shadow-cyan-900/50">
-             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-          </div>
-          <h3 className="text-4xl font-bold text-white mb-6 leading-tight tracking-tight drop-shadow-sm">
-            Gestión médica <br/>
-            <span className="text-cyan-200">inteligente y segura</span>
-          </h3>
-          <p className="text-cyan-100 text-lg leading-relaxed font-light opacity-90">
-            Optimiza la atención de tus pacientes y administra obras sociales con la plataforma diseñada para profesionales.
-          </p>
         </div>
       </div>
     </div>

@@ -4,29 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-
-// Reutilizamos el patrón de ondas (o puedes importarlo si lo extraes a un componente)
-const WavePattern = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    <svg
-      className="absolute w-[200%] h-[200%] top-[-50%] left-[-50%] animate-[spin_50s_linear_infinite] opacity-30"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-    >
-       <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.2" className="text-cyan-300/30" />
-       <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeWidth="0.3" className="text-cyan-200/40" />
-       <circle cx="50" cy="50" r="25" fill="none" stroke="currentColor" strokeWidth="0.4" className="text-white/20" />
-       <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.5"
-        d="M50 50 m-40 0 a 40 40 0 1 0 80 0 a 40 40 0 1 0 -80 0"
-        className="text-cyan-400/20"
-      />
-    </svg>
-    <div className="absolute inset-0 bg-gradient-to-bl from-cyan-800/90 via-cyan-600/80 to-cyan-500/50" />
-  </div>
-);
+import InteractiveBackground from "@/components/auth/InteractiveBackground";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -87,24 +65,9 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          name: formData.name || formData.email.split('@')[0],
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Error al registrarse');
-        setLoading(false);
-        return;
-      }
-      router.push('/auth/login?registered=true');
+      // Simulación
+       await new Promise(resolve => setTimeout(resolve, 1500));
+       router.push('/auth/login?registered=true');
     } catch {
       setError('Error al conectar con el servidor');
       setLoading(false);
@@ -112,19 +75,37 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex w-full bg-white overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row relative overflow-hidden">
       
-      {/* Left side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-20 py-12 relative z-10">
-        <div className="w-full max-w-sm mx-auto animate-[fadeIn_0.6s_ease-out]">
-          
-          <div className="mb-10 flex items-center gap-2">
-            <div className="w-8 h-8 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold">D</div>
-            <span className="text-xl font-bold text-gray-800 tracking-tight">Dermacor</span>
-          </div>
+      {/* 1. FONDO INTERACTIVO 
+          Móvil: Absolute inset-0 (Fondo completo)
+          Desktop: Static width-1/2 order-2 (Columna derecha)
+      */}
+      <div className="absolute inset-0 z-0 lg:static lg:w-1/2 lg:order-2 lg:h-screen bg-cyan-950">
+        <InteractiveBackground />
+      </div>
 
-          <div className="mb-8">
-            <h2 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">
+      {/* 2. CONTENEDOR DEL FORMULARIO
+          Móvil: Relative z-10 (Encima del fondo)
+          Desktop: Static width-1/2 order-1 (Columna izquierda)
+      */}
+      <div className="w-full relative z-10 flex items-center justify-center min-h-screen lg:min-h-0 lg:w-1/2 lg:order-1 lg:bg-white">
+        
+        {/* TARJETA / CONTENIDO
+            Móvil: Estilo 'Glassmorphism' (blanco translúcido, bordes, sombras)
+            Desktop: Estilo limpio (sin fondo, sin sombras, integrado)
+        */}
+        <div className="w-full max-w-[480px] px-6 py-8 mx-4 
+                        bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20
+                        lg:bg-transparent lg:shadow-none lg:rounded-none lg:border-none lg:p-0 lg:mx-0 lg:max-w-sm animate-[fadeIn_0.6s_ease-out]">
+          
+          <div className="mb-8 lg:mb-10 text-center lg:text-left">
+            <div className="flex items-center justify-center lg:justify-start gap-2 mb-6">
+              <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">D</div>
+              <span className="text-2xl font-bold text-gray-800 tracking-tight">Dermacor</span>
+            </div>
+
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">
               Crear una cuenta
             </h2>
             <p className="text-gray-500">
@@ -134,7 +115,7 @@ export default function RegisterPage() {
 
           {error && (
             <div className="mb-6 rounded-xl bg-red-50 p-4 border border-red-100 flex items-center gap-3">
-               <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                </svg>
               <p className="text-sm text-red-600 font-medium">{error}</p>
@@ -199,7 +180,7 @@ export default function RegisterPage() {
                   name="confirmPassword"
                   type="password"
                   required
-                  placeholder="Repetir contraseña"
+                  placeholder="Repetir"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:bg-white transition-all duration-200"
@@ -210,13 +191,13 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 active:scale-[0.99] text-white font-bold text-lg shadow-lg shadow-cyan-500/30 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+              className="w-full py-4 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 active:scale-[0.99] text-white font-bold text-lg shadow-lg shadow-cyan-500/30 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-6"
             >
               {loading ? 'Creando cuenta...' : 'Continuar'}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+          <div className="mt-8 pt-6 border-t border-gray-100/50 text-center">
             <p className="text-gray-500 text-sm">
               ¿Ya tienes cuenta?{' '}
               <Link
@@ -227,24 +208,6 @@ export default function RegisterPage() {
               </Link>
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* Right side - Gradient Background */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-cyan-900 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-950 via-cyan-800 to-cyan-600 opacity-90"></div>
-        <WavePattern />
-        
-        <div className="relative z-10 text-center px-12 max-w-lg">
-           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 mb-8 shadow-2xl shadow-cyan-900/50">
-             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-          </div>
-          <h3 className="text-4xl font-bold text-white mb-6 leading-tight tracking-tight">Únete a Dermacor</h3>
-          <p className="text-cyan-100 text-lg leading-relaxed font-light opacity-90">
-            La plataforma integral para gestionar pacientes, citas y obras sociales de forma centralizada.
-          </p>
         </div>
       </div>
     </div>

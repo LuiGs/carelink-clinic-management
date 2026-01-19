@@ -2,6 +2,7 @@
 
 import type { PacienteConObras } from "@/types/pacienteConObras";
 import PacienteCard from "@/components/pacientes/pacienteCard";
+import PacientesMobileTable from "@/components/pacientes/pacientesMobileTable";
 
 type ListaPacientesProps = {
   pacientes: PacienteConObras[];
@@ -26,16 +27,29 @@ export default function ListaPacientes({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {pacientes.map((p) => (
-        <PacienteCard
-          key={p.idPaciente}
-          paciente={p}
+    <>
+      {/* Mobile: tabla/lista */}
+      <div className="md:hidden">
+        <PacientesMobileTable
+          pacientes={pacientes}
           onVerHistoria={onVerHistoria}
           onChanged={onChanged}
           onEditSuccess={onEditSuccess}
         />
-      ))}
-    </div>
+      </div>
+
+      {/* Desktop/Tablet: cards */}
+      <div className="hidden md:grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {pacientes.map((p) => (
+          <PacienteCard
+            key={p.idPaciente}
+            paciente={p}
+            onVerHistoria={onVerHistoria}
+            onChanged={onChanged}
+            onEditSuccess={onEditSuccess}
+          />
+        ))}
+      </div>
+    </>
   );
 }

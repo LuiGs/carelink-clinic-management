@@ -1,5 +1,6 @@
 // prisma/seed.ts
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -12,6 +13,19 @@ async function main() {
   await prisma.consultas.deleteMany();
   await prisma.paciente.deleteMany();
   await prisma.obraSocial.deleteMany();
+  await prisma.user.deleteMany();
+
+  // 0) Usuario Admin
+  const hashedPassword = await bcrypt.hash("Hola1234!", 12);
+  await prisma.user.create({
+    data: {
+      name: "USUARIO",
+      email: "admin@derm.local",
+      password: hashedPassword,
+      role: "admin",
+    },
+  });
+  console.log("✓ Usuario admin creado: admin@derm.local");
 
   // 1) Obras Sociales (6)
   const obrasSocialesData = [

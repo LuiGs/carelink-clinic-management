@@ -6,8 +6,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Users, ChevronLeft, ChevronRight, IdCard, X, LogOut, LogIn, UserPlus, User, Home } from "lucide-react";
 import { Footer } from "@/components/footer";
-import { useSession, signOut } from "next-auth/react";
-import { useSidebarContext } from "@/components/ui/sidebar-context"; // Importamos el hook
+import { useAuth } from "@/hooks/useAuth";
+import { useSidebarContext } from "@/components/ui/sidebar-context";
 
 const MENU_ITEMS = [
     { name: "Inicio", url: "/", icon: Home },
@@ -21,7 +21,7 @@ interface SideBarProps {
 
 export default function SideBar({ children }: SideBarProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { user, isAuthenticated, logout } = useAuth();
   
   // Usamos el contexto en lugar de un estado local para el mobile
   const { isMobileOpen, closeMobileMenu } = useSidebarContext();
@@ -111,19 +111,19 @@ export default function SideBar({ children }: SideBarProps) {
         {/* LOGIN / LOGOUT EN SIDEBAR (SOLO MOBILE) */}
         {/* Usamos md:hidden para que en desktop NO se vea esto duplicado, ya que está en el header */}
         <div className="p-4 border-t bg-gray-50 md:hidden">
-            {session ? (
+            {isAuthenticated ? (
                 <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700">
                             <User size={18} />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-medium text-gray-900 truncate max-w-[140px]">{session.user?.name || "Usuario"}</span>
-                            <span className="text-xs text-gray-500 truncate max-w-[140px]">{session.user?.email}</span>
+                            <span className="text-sm font-medium text-gray-900 truncate max-w-[140px]">{user?.name || "Usuario"}</span>
+                            <span className="text-xs text-gray-500 truncate max-w-[140px]">{user?.email}</span>
                         </div>
                     </div>
                     <button 
-                        onClick={() => signOut({ callbackUrl: '/auth/login' })}
+                        onClick={logout}
                         className="flex items-center gap-2 text-sm text-red-600 hover:bg-red-50 p-2 rounded-md w-full"
                     >
                         <LogOut size={18} />

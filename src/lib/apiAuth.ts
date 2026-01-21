@@ -1,46 +1,65 @@
 import { getToken } from "next-auth/jwt";
 import { NextResponse, type NextRequest } from "next/server";
+import type { JWT } from "next-auth/jwt";
+
+// Tipos para el resultado de verificación
+type AuthSuccess = {
+  error: false;
+  status: 200;
+  session: JWT;
+  response?: never;
+};
+
+type AuthError = {
+  error: true;
+  status: 401 | 500;
+  session: null;
+  response: Response;
+};
+
+type AuthResult = AuthSuccess | AuthError;
 
 /**
  * Función para verificar autenticación en API routes
- * Uso: const token = await verifyAuth(req);
+ * Uso: const auth = await verifyAuth(req);
+ * if (auth.error) return auth.response;
  */
-export async function verifyAuth(req: NextRequest) {
-  const token = await getToken({ 
-    req, 
-    secret: process.env.NEXTAUTH_SECRET 
-  });
+export async function verifyAuth(req: NextRequest): Promise<AuthResult> {
+  try {
+    const token = await getToken({ 
+      req, 
+      secret: process.env.NEXTAUTH_SECRET 
+    });
 
-  if (!token) {
+    if (!token) {
+      return {
+        error: true,
+        status: 401,
+        session: null,
+        response: NextResponse.json(
+          { error: "No autenticado. Por favor, inicia sesión." },
+          { status: 401 }
+        ),
+      };
+    }
+
+    return {
+      error: false,
+      status: 200,
+      session: token as JWT,
+    };
+  } catch (error) {
+    console.error("Error verifying auth:", error);
     return {
       error: true,
-      response: NextResponse.json(
-        { error: "No autenticado. Por favor, inicia sesión." },
-        { status: 401 }
-      ) as Response,
+      status: 500,
       session: null,
+      response: NextResponse.json(
+        { error: "Error interno del servidor" },
+        { status: 500 }
+      ),
     };
   }
-
-  return {
-    error: false,
-    response: new Response(),
-    session: token,
-  };
-}
-
-/**
- * Alias para mantener compatibilidad con código existente
- * @deprecated Usa verifyAuth en su lugar
- */
-export async function requireAuth() {
-  // Esta función es para rutas que no tienen acceso directo al request
-  // En esos casos, usamos getToken sin request
-  return {
-    error: false,
-    response: null,
-    session: null,
-  };
 }
 
 /**
@@ -50,17 +69,24 @@ export async function requireAuth() {
  *   // Tu código aquí
  * });
  */
-export function withAuth(
-  handler: (req: NextRequest, context?: { session: unknown; [key: string]: unknown }) => Promise<Response>
+export function withAuth<T extends Record<string, unknown>>(
+  handler: (req: NextRequest, context: { session: JWT } & T) => Promise<Response>
 ) {
-  return async (req: NextRequest, context?: unknown) => {
-    const authResult = await verifyAuth(req);
+  return async (req: NextRequest, context?: T) => {
+    const { error, status, session } = await verifyAuth(req);
 
-    if (authResult.error) {
-      return authResult.response;
+    if (error) {
+      return NextResponse.json(
+        { error: "No autenticado. Por favor, inicia sesión." },
+        { status }
+      );
     }
 
-    const mergedContext = context ? { session: authResult.session, ...context as object } : { session: authResult.session };
+    const mergedContext = {
+      session,
+      ...context,
+    } as { session: JWT } & T;
+    
     return handler(req, mergedContext);
   };
 }

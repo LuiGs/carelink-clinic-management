@@ -1,13 +1,11 @@
-import { Providers } from "../providers";
-
+/**
+ * Layout para las páginas de autenticación
+ * No necesita un provider adicional porque el RootLayout ya lo incluye
+ */
 export default function AuthLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <Providers>
-      {children}
-    </Providers>
-  );
+  return <>{children}</>;
 }

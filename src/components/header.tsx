@@ -1,22 +1,15 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Menu } from 'lucide-react'; // Importamos el ícono
-import { useSidebarContext } from '@/components/ui/sidebar-context'; // Importamos nuestro hook
+import { Menu } from 'lucide-react';
+import { useSidebarContext } from '@/components/ui/sidebar-context';
 import LogoComponent from './Logo';
 
 export function Header() {
-  const { data: session } = useSession();
-  const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuth();
   
   const { toggleMobileMenu } = useSidebarContext();
-
-  const handleLogout = async () => {
-    await signOut({ redirect: false });
-    router.push('/auth/login');
-  };
 
   return (
     <header className="h-16 bg-white border-b border-cyan-100 shadow-sm sticky top-0 z-50">
@@ -33,13 +26,13 @@ export function Header() {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          {session ? (
+          {isAuthenticated ? (
             <>
               <span className="text-sm text-cyan-700 font-medium truncate max-w-xs">
-                {session.user?.email}
+                {user?.email}
               </span>
               <button
-                onClick={handleLogout}
+                onClick={logout}
                 className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-sm"
               >
                 Cerrar sesión

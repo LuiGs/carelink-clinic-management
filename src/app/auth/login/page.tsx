@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import InteractiveBackground from "@/components/auth/InteractiveBackground";
 
 function LoginContent() {
@@ -13,6 +14,7 @@ function LoginContent() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
@@ -40,16 +42,22 @@ function LoginContent() {
     setLoading(true);
 
     try {
+      // Obtener callbackUrl si existe
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      
       const res = await signIn("credentials", {
-        email,
+        email: email.trim().toLowerCase(),
         password,
         redirect: false,
       });
 
       if (res?.ok) {
-        router.push("/obras-sociales");
+        // Redirigir a la URL callback o a pacientes por defecto
+        router.push(callbackUrl);
+        router.refresh();
       } else {
-        setError(res?.error || "Email o contraseña incorrectos");
+        // Mapear errores de forma genérica por seguridad
+        setError("Email o contraseña incorrectos");
         setLoading(false);
       }
     } catch (err) {
@@ -150,15 +158,25 @@ function LoginContent() {
                   Contraseña
                 </label>
               </div>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-5 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:bg-white transition-all duration-200"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-5 py-3.5 pr-12 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:bg-white transition-all duration-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
             <button

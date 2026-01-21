@@ -1,15 +1,18 @@
-import NextAuth, { type NextAuthOptions } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import NextAuth, { type AuthOptions, type Session, type User } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { JWT } from "next-auth/jwt";
+import type { Adapter } from "next-auth/adapters";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
-import type { Session } from "next-auth";
-import type { JWT } from "next-auth/jwt";
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+const INVALID_CREDENTIALS_ERROR = "Credenciales inválidas";
+const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 días
+
+export const authConfig: AuthOptions = {
+  adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
-    Credentials({
+    CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email", placeholder: "tu@correo.com" },
@@ -17,24 +20,26 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Credenciales inválidas");
+          throw new Error(INVALID_CREDENTIALS_ERROR);
         }
 
+        const email = credentials.email.toString().toLowerCase().trim();
+        
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         });
 
         if (!user) {
-          throw new Error("No existe un usuario con ese email");
+          throw new Error(INVALID_CREDENTIALS_ERROR);
         }
 
         const passwordMatch = await bcrypt.compare(
-          credentials.password as string,
+          credentials.password.toString(),
           user.password
         );
 
         if (!passwordMatch) {
-          throw new Error("Contraseña incorrecta");
+          throw new Error(INVALID_CREDENTIALS_ERROR);
         }
 
         return {
@@ -48,25 +53,46 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt" as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 días
+    maxAge: SESSION_MAX_AGE,
+    updateAge: 24 * 60 * 60, // Actualizar token cada 24 horas
   },
   pages: {
     signIn: "/auth/login",
     error: "/auth/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User & { role?: string } }) {
+      // En el login inicial, user objeto está disponible
       if (user) {
         token.id = user.id;
-        if (user.email) token.email = user.email;
-        if (user.name) token.name = user.name;
+        token.email = user.email ?? token.email;
+        token.name = user.name ?? token.name;
         const userWithRole = user as { role?: string };
-        if (userWithRole.role) token.role = userWithRole.role;
+        token.role = userWithRole.role ?? token.role ?? "USER";
       }
+      
+      // Verificar que el usuario siga siendo válido en la BD (en cada refresh)
+      if (token.sub) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { id: true, email: true, name: true, role: true },
+        });
+        
+        if (!dbUser) {
+          // Usuario fue eliminado, invalidar token
+          return {};
+        }
+        
+        // Actualizar información del usuario por si cambió
+        token.email = dbUser.email;
+        token.name = dbUser.name;
+        token.role = dbUser.role;
+      }
+      
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      if (session.user) {
+      if (session.user && token) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
@@ -76,7 +102,13 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
+  logger: {
+    error: (code, metadata) => {
+      console.error(`Auth error [${code}]:`, metadata);
+    },
+  },
 };
 
-export const handler = NextAuth(authOptions);
+export const handler = NextAuth(authConfig);
 

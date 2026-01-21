@@ -209,7 +209,7 @@ export default function EditarConsultaModal({
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[90vw] sm:w-full sm:max-w-md max-h-[85vh] sm:max-h-[90vh] overflow-y-auto mx-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Editar Consulta</DialogTitle>
             <DialogDescription>

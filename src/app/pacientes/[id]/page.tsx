@@ -172,16 +172,20 @@ function PacienteDetailContent() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 md:p-8 space-y-6">
-      {/* Header - Sin color de fondo */}
-      <div className="flex items-center justify-between bg-white rounded-lg p-4 shadow-sm">
-        <Link href="/pacientes">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Button>
-        </Link>
-        <h1 className="text-3xl font-bold text-foreground">Historia Clínica</h1>
-        <div className="w-25" />
+      {/* Header - Responsive */}
+      <div className="bg-white rounded-lg p-4 shadow-sm border-cyan-200 border">
+        <div className="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-4 ">
+          <Link href="/pacientes">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold text-foreground text-center md:flex-1 md:text-center">
+            Historia Clínica
+          </h1>
+          <div className="hidden md:block w-20" />
+        </div>
       </div>
 
       {/* Datos del Paciente */}
@@ -282,10 +286,19 @@ function PacienteDetailContent() {
 
       <Separator className="bg-cyan-200" />
 
-      {/* Grid: Historial + Formulario */}
+      {/* Grid: Formulario + Historial */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Formulario de Nueva Consulta - En mobile aparece primero (order-first en lg), 2 columnas en lg */}
+        <div className="lg:col-span-2 lg:order-2">
+          <RegistrarConsultaForm
+            idPaciente={paciente.idPaciente}
+            onConsultaCreated={handleConsultaCreated}
+            ultimaObraSocial={ultimaObraSocial}
+          />
+        </div>
+
         {/* Historial de Consultas - Ocupará 3 columnas en pantallas grandes */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 lg:order-1">
           <h2 className="text-2xl font-bold text-foreground mb-6">
             Historial de Consultas
           </h2>
@@ -294,15 +307,6 @@ function PacienteDetailContent() {
             idPaciente={paciente.idPaciente}
             onLoadMore={handleLoadMore}
             onConsultaUpdated={handleConsultaUpdated}
-          />
-        </div>
-
-        {/* Formulario de Nueva Consulta - 2 columnas (más ancho) */}
-        <div className="lg:col-span-2">
-          <RegistrarConsultaForm
-            idPaciente={paciente.idPaciente}
-            onConsultaCreated={handleConsultaCreated}
-            ultimaObraSocial={ultimaObraSocial}
           />
         </div>
       </div>

@@ -86,66 +86,78 @@ export default function HistorialConsultasLista({
       {/* Date pickers para rango de fechas - SIEMPRE VISIBLE */}
       <div className="flex flex-col gap-3">
         <Label className="text-cyan-900 font-semibold">Filtrar por fechas</Label>
-        <div className="flex gap-2 flex-wrap">
-          {/* Picker: Desde */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="justify-between border-cyan-200 hover:border-cyan-400 text-cyan-900 w-48"
-              >
-                <span className="text-sm">
-                  {dateRange.from
-                    ? dateRange.from.toLocaleDateString("es-AR")
-                    : "Desde"}
-                </span>
-                <ChevronDownIcon className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateRange.from}
-                captionLayout="dropdown"
-                onSelect={(date) => {
-                  handleDateRangeChange({
-                    ...dateRange,
-                    from: date,
-                  });
-                }}
-              />
-            </PopoverContent>
-          </Popover>
+        <div className="flex gap-2 flex-wrap items-center">
+          {/* Label y Picker: Desde */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-cyan-900">Desde:</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="justify-between border-cyan-200 hover:border-cyan-400 text-cyan-900 w-48"
+                >
+                  <span className="text-sm">
+                    {dateRange.from
+                      ? dateRange.from.toLocaleDateString("es-AR")
+                      : "Seleccionar fecha"}
+                  </span>
+                  <ChevronDownIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateRange.from}
+                  captionLayout="dropdown"
+                  disabled={(date) =>
+                    dateRange.to ? date > dateRange.to : false
+                  }
+                  onSelect={(date) => {
+                    handleDateRangeChange({
+                      ...dateRange,
+                      from: date,
+                    });
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
 
-          {/* Picker: Hasta */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="justify-between border-cyan-200 hover:border-cyan-400 text-cyan-900 w-48"
-              >
-                <span className="text-sm">
-                  {dateRange.to
-                    ? dateRange.to.toLocaleDateString("es-AR")
-                    : "Hasta"}
-                </span>
-                <ChevronDownIcon className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateRange.to}
-                captionLayout="dropdown"
-                onSelect={(date) => {
-                  handleDateRangeChange({
-                    ...dateRange,
-                    to: date,
-                  });
-                }}
-              />
-            </PopoverContent>
-          </Popover>
+          {/* Label y Picker: Hasta */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-cyan-900">Hasta:</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="justify-between border-cyan-200 hover:border-cyan-400 text-cyan-900 w-48"
+                >
+                  <span className="text-sm">
+                    {dateRange.to
+                      ? dateRange.to.toLocaleDateString("es-AR")
+                      : "Seleccionar fecha"}
+                  </span>
+                  <ChevronDownIcon className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateRange.to}
+                  captionLayout="dropdown"
+                  disabled={(date) =>
+                    dateRange.from ? date < dateRange.from : false
+                  }
+                  onSelect={(date) => {
+                    handleDateRangeChange({
+                      ...dateRange,
+                      to: date,
+                    });
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Botón limpiar */}
           {(dateRange.from || dateRange.to) && (
@@ -175,7 +187,7 @@ export default function HistorialConsultasLista({
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4 max-h-[calc(100vh-500px)] overflow-y-auto pr-4 custom-scrollbar">
+        <div className="space-y-4 max-h-140 overflow-y-auto pr-4 custom-scrollbar">
           {consultas.map((consulta) => (
         <Card
           key={consulta.idConsulta}

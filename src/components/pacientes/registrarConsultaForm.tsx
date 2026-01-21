@@ -196,6 +196,7 @@ export default function RegistrarConsultaForm({
         montoConsulta: "",
       });
       setSelectedObraSocial(null);
+      setUsarUltimaObraSocial(false);
 
       setTimeout(() => setSuccessOpen(false), 3000);
     } catch (err) {

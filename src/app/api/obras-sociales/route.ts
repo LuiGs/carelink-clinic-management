@@ -1,80 +1,53 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
-import { Prisma } from "@prisma/client";
-import { z } from "zod";
+// app/api/obras-sociales/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { verifyAuth } from '@/lib/apiAuth'
 
-const createSchema = z.object({
-  nombre: z.string().trim().min(1, "El nombre es obligatorio"),
-  codigo: z.string().trim().optional(),
-});
+export async function GET(req: NextRequest): Promise<Response> {
+  const auth = await verifyAuth(req);
+  if (auth.error) return auth.response;
 
-export async function GET(req: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-
-    const { searchParams } = new URL(req.url);
-    const q = (searchParams.get("q") ?? "").trim();
-    const incluirInactivas = (searchParams.get("incluirInactivas") ?? "false") === "true";
-
-    const where: Prisma.ObraSocialWhereInput = {
-      AND: [
-        incluirInactivas ? {} : { activa: true },
-        q
-          ? {
-              OR: [
-                { nombre: { contains: q, mode: "insensitive" } },
-                { codigo: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {},
-      ],
-    };
-
-    const obrasSociales = await prisma.obraSocial.findMany({
-      where,
-      orderBy: { nombre: "asc" },
-    });
-
-    return NextResponse.json({ obrasSociales });
-  } catch (err: unknown) {
-    console.error("[API][obras-sociales][GET] error:", err);
-    return NextResponse.json({ error: "Error al cargar obras sociales" }, { status: 500 });
+    const obras = await prisma.obraSocial.findMany({
+      orderBy: { idObraSocial: 'desc' }
+    })
+    return NextResponse.json(obras)
+  } catch {
+    return NextResponse.json({ error: 'Error al obtener datos' }, { status: 500 })
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
+  const auth = await verifyAuth(req);
+  if (auth.error) return auth.response;
+
   try {
-    const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    if (!user.roles?.includes("GERENTE")) {
-      return NextResponse.json({ error: "Permisos insuficientes" }, { status: 403 });
+    const body = await req.json()
+    
+    if (!body.nombreObraSocial) {
+      return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 })
     }
-
-    const payload = (await req.json()) as unknown;
-    const data = createSchema.parse(payload);
-
-    const created = await prisma.obraSocial.create({
+    const nuevaObra = await prisma.obraSocial.create({
       data: {
-        nombre: data.nombre,
-        codigo: data.codigo || null,
-      },
-    });
+        nombreObraSocial: body.nombreObraSocial.toLowerCase(),
+        estadoObraSocial: body.estadoObraSocial ?? true
+      }
+    })
 
-    return NextResponse.json(
-      { obraSocial: created, message: "Obra social registrada exitosamente" },
-      { status: 201 }
-    );
-  } catch (err: unknown) {
-    if (err instanceof z.ZodError) {
-      const first = err.issues[0];
-      return NextResponse.json({ error: first.message }, { status: 400 });
+    return NextResponse.json(nuevaObra, { status: 201 })
+  } catch (e: unknown) {
+    if (
+      typeof e === 'object' && 
+      e !== null && 
+      'code' in e && 
+      (e as { code: string }).code === "P2002"
+    ) {
+      return NextResponse.json({ 
+        error: "No se pudo crear la obra social porque el nombre ingresado ya se encuentra registrada" 
+      }, { status: 400 })
     }
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      return NextResponse.json({ error: "Ya existe una obra social con ese nombre o código" }, { status: 409 });
-    }
-    console.error("[API][obras-sociales][POST] error:", err);
-    return NextResponse.json({ error: "Error al crear la obra social" }, { status: 500 });
+
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: 'Error al crear: ' + errorMessage }, { status: 500 })
   }
 }

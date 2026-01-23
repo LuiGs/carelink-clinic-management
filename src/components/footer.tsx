@@ -1,6 +1,6 @@
 "use client";
 
-import { Linkedin, Phone, MapPin, ExternalLink, Code2, Heart } from "lucide-react";
+import { Linkedin, Phone, ExternalLink, Code2, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 

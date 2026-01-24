@@ -3,6 +3,7 @@
 import { Linkedin, Phone, ExternalLink, Code2, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import ReportarErrorDialog from "./ReportarErrorDialog";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -31,10 +32,10 @@ export function Footer() {
                 <Link href={"/documentacion"} className="hover:text-cyan-600 transition-colors">Documentación</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-cyan-600 transition-colors">Reportar un error</a>
+                <a href="/terminos-y-condiciones" className="hover:text-cyan-600 transition-colors">Términos y condiciones</a>
               </li>
               <li>
-                <a href="/terminos-y-condiciones" className="hover:text-cyan-600 transition-colors">Términos y condiciones</a>
+                <ReportarErrorDialog />
               </li>
             </ul>
           </div>

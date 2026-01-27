@@ -1,7 +1,9 @@
 "use client";
 
-import { Linkedin, Phone, MapPin, ExternalLink, Code2, Heart } from "lucide-react";
+import { Linkedin, Phone, ExternalLink, Code2, Heart } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import ReportarErrorDialog from "./ReportarErrorDialog";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -15,7 +17,7 @@ export function Footer() {
           {/* Columna 1: El Sistema (Dermacor) */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              Dermacor <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-medium">v1.0.0</span>
+              DermaCore <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full font-medium">v1.0.0</span>
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
               Sistema integral de gestión dermatológica. Optimizando la atención clínica y la administración de pacientes con tecnología de punta.
@@ -27,13 +29,13 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Soporte</h4>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
-                <a href="#" className="hover:text-cyan-600 transition-colors">Documentación</a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-cyan-600 transition-colors">Reportar un error</a>
+                <Link href={"/documentacion"} className="hover:text-cyan-600 transition-colors">Documentación</Link>
               </li>
               <li>
                 <a href="/terminos-y-condiciones" className="hover:text-cyan-600 transition-colors">Términos y condiciones</a>
+              </li>
+              <li>
+                <ReportarErrorDialog />
               </li>
             </ul>
           </div>
@@ -82,7 +84,7 @@ export function Footer() {
       <div className="border-t border-slate-100 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-500 text-center md:text-left">
-            &copy; {currentYear} Dermacor. Todos los derechos reservados.
+            &copy; {currentYear} DermaCore. Todos los derechos reservados.
           </p>
           
           <div className="flex items-center gap-1 text-xs text-slate-400">

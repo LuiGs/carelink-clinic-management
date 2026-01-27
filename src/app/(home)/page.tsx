@@ -25,7 +25,7 @@ export default function Home() {
           "
         >
           <span>Bienvenido a</span>
-          <LogoComponent />
+          <LogoComponent className="text-xl sm:text-2xl lg:text-3xl" />
         </h1>
 
         <p
